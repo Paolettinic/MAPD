@@ -49,9 +49,9 @@ class TkinterSimulation(Simulation):
         ag1 = TKAgent(self.canvas, (1,1), self.get_next_color())
         self.agents = [ag1]
         for i in range(grid_size, win_w, grid_size):
-            self.canvas.create_line((i, 0, i, win_h))
+            self.canvas.create_line((i, 0, i, win_h), fill="grey")
         for i in range(grid_size, win_h, grid_size):
-            self.canvas.create_line((0, i, win_w, i))
+            self.canvas.create_line((0, i, win_w, i), fill="grey")
         for i in range(map.height):
             for j in range(map.width):
                 if map.map[i][j] == 0:
@@ -60,22 +60,23 @@ class TkinterSimulation(Simulation):
                         fill="black",
                         outline="black"
                     )
-        self.window.bind("<Key>", self.toogle_state)
+        self.window.bind("<Key>", self.toggle_state)
         self.state = State.PAUSED
         self.positions = [(2,4),(2,3),(2,2),(2,1)]
 
-    def toogle_state(self, event):
+    def toggle_state(self, event):
         if event.char == " ":
-            print(self.state == State.RUNNING)
             if self.state == State.RUNNING:
                 self.state = State.PAUSED
-            if self.state == State.PAUSED:
+            elif self.state == State.PAUSED:
                 self.state = State.RUNNING
+            else:
+                raise RuntimeError("Unknown state")
     def update(self):
-
         #print("update")
         #if self.state == State.PAUSED:
         #    self.window.mainloop()
+        print(self.state)
         if self.state == State.RUNNING:
             if len(self.positions) > 0:
                 new_pos = self.positions.pop()

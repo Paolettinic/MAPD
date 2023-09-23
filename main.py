@@ -20,8 +20,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-s","--simulator",
-        default="OpenCV",
-        help="Which simulator to use; currently supported: OpenCV (default), CoppeliaSim"
+        default="Tkinter",
+        help="Which simulator to use; currently supported: Tkinter (default), CoppeliaSim"
     )
     parser.add_argument(
         "map",
