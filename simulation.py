@@ -2,8 +2,10 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from map import Map
 from agent import TKAgent
-from utils import rect_pos_to_coords, move_from_to
+from utils import rect_pos_to_coords
 from enum import Enum, auto
+
+
 class Simulation(ABC):
     DT = 1000
 
@@ -27,37 +29,39 @@ class Simulation(ABC):
     # def add_order_to_dispatcher(self, order: Any, dispatcher: Any) -> None:
     #     pass
 
+
 class State(Enum):
     RUNNING = auto()
     PAUSED = auto()
 
+
 class TkinterSimulation(Simulation):
+    """
 
-
-    def __init__(self, map: Map, grid_size: int = 10):
+    """
+    def __init__(self, scenario: Map, grid_size: int = 10):
         self.paused_text = "Paused, press SPACEBAR to resume."
         self.running_text = "Running, press SPACEBAR to pause."
         self.colors = ["red", "green", "blue", "purple", "yellow"]
         self.cur_color = 0
         self.window = tk.Tk()
-        win_w, win_h = map.width * grid_size, map.height * grid_size
-        self.window.geometry(f'{win_w}x{win_h+100}')
+        win_w, win_h = scenario.width * grid_size, scenario.height * grid_size
+        self.window.geometry(f'{win_w}x{win_h+20}')
         self.window.resizable(False, False)
         self.status_label = tk.Label(self.window, text="Paused, press SPACEBAR to resume.")
         self.window.title("Canvas")
         self.canvas = tk.Canvas(self.window, bg='white', width=win_w, height=win_h)
         self.canvas.pack()
         self.status_label.pack()
-        #ag1 = self.canvas.create_rectangle(self._pos_to_coords(1,1), fill=self.get_next_color())
         ag1 = TKAgent(self.canvas, (1,1), self.get_next_color())
         self.agents = [ag1]
         for i in range(grid_size, win_w, grid_size):
             self.canvas.create_line((i, 0, i, win_h), fill="grey")
         for i in range(grid_size, win_h, grid_size):
             self.canvas.create_line((0, i, win_w, i), fill="grey")
-        for i in range(map.height):
-            for j in range(map.width):
-                if map.map[i][j] == 0:
+        for i in range(scenario.height):
+            for j in range(scenario.width):
+                if scenario.map[i][j] == 0:
                     self.canvas.create_rectangle(
                         rect_pos_to_coords(j, i),
                         fill="black",
@@ -78,10 +82,6 @@ class TkinterSimulation(Simulation):
             else:
                 raise RuntimeError("Unknown state")
     def update(self):
-        #print("update")
-        #if self.state == State.PAUSED:
-        #    self.window.mainloop()
-        print(self.state)
         if self.state == State.RUNNING:
             if len(self.positions) > 0:
                 new_pos = self.positions.pop()
