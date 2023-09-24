@@ -35,16 +35,19 @@ class TkinterSimulation(Simulation):
 
 
     def __init__(self, map: Map, grid_size: int = 10):
-
+        self.paused_text = "Paused, press SPACEBAR to resume."
+        self.running_text = "Running, press SPACEBAR to pause."
         self.colors = ["red", "green", "blue", "purple", "yellow"]
         self.cur_color = 0
         self.window = tk.Tk()
         win_w, win_h = map.width * grid_size, map.height * grid_size
-        self.window.geometry(f'{win_w}x{win_h}')
+        self.window.geometry(f'{win_w}x{win_h+100}')
         self.window.resizable(False, False)
+        self.status_label = tk.Label(self.window, text="Paused, press SPACEBAR to resume.")
         self.window.title("Canvas")
         self.canvas = tk.Canvas(self.window, bg='white', width=win_w, height=win_h)
         self.canvas.pack()
+        self.status_label.pack()
         #ag1 = self.canvas.create_rectangle(self._pos_to_coords(1,1), fill=self.get_next_color())
         ag1 = TKAgent(self.canvas, (1,1), self.get_next_color())
         self.agents = [ag1]
@@ -68,8 +71,10 @@ class TkinterSimulation(Simulation):
         if event.char == " ":
             if self.state == State.RUNNING:
                 self.state = State.PAUSED
+                self.status_label.config(text=self.paused_text)
             elif self.state == State.PAUSED:
                 self.state = State.RUNNING
+                self.status_label.config(text=self.running_text)
             else:
                 raise RuntimeError("Unknown state")
     def update(self):
@@ -87,7 +92,6 @@ class TkinterSimulation(Simulation):
         c = self.colors[self.cur_color]
         self.cur_color = (self.cur_color + 1) % len(self.colors)
         return c
-
 
     def start(self) -> None:
         self.window.after(self.DT, self.update)
