@@ -4,13 +4,13 @@ import argparse
 import cv2
 import cv2 as cv
 import pathlib
-from map import Map
+from grid import Grid
 from simulation import Simulation, TkinterSimulation
 
 
 def main(args):
-    warehouse_map = Map(args["map"])
-    simulation = TkinterSimulation(warehouse_map)
+    warehouse_grid = Grid(args["map"])
+    simulation = TkinterSimulation(warehouse_grid)
 
     simulation.start()
 

@@ -1,13 +1,14 @@
 import tkinter as tk
 from abc import ABC, abstractmethod
-from map import Map
+from grid import Grid
 from agent import TKAgent
-from utils import rect_pos_to_coords
+from utils import rect_pos_to_coordinates
 from enum import Enum, auto
+from planner.a_star_planner import AStarPlanner
 
 
 class Simulation(ABC):
-    DT = 1000
+    DT = 100
 
     @abstractmethod
     def start(self) -> None:
@@ -39,38 +40,44 @@ class TkinterSimulation(Simulation):
     """
 
     """
-    def __init__(self, scenario: Map, grid_size: int = 10):
+
+    def __init__(self, grid: Grid, grid_size: int = 10):
+        win_w, win_h = grid.width * grid_size, grid.height * grid_size
+        # utilities attributes
         self.paused_text = "Paused, press SPACEBAR to resume."
         self.running_text = "Running, press SPACEBAR to pause."
+        self.state = State.PAUSED
         self.colors = ["red", "green", "blue", "purple", "yellow"]
         self.cur_color = 0
+        # window creation
         self.window = tk.Tk()
-        win_w, win_h = scenario.width * grid_size, scenario.height * grid_size
-        self.window.geometry(f'{win_w}x{win_h+20}')
+        self.window.geometry(f'{win_w}x{win_h + 20}')
+        self.window.title("MAPF")
         self.window.resizable(False, False)
-        self.status_label = tk.Label(self.window, text="Paused, press SPACEBAR to resume.")
-        self.window.title("Canvas")
         self.canvas = tk.Canvas(self.window, bg='white', width=win_w, height=win_h)
+        self.status_label = tk.Label(self.window, text=self.paused_text)
+        self.window.bind("<Key>", self.toggle_state)
         self.canvas.pack()
         self.status_label.pack()
-        ag1 = TKAgent(self.canvas, (1,1), self.get_next_color())
+        # Agents creation
+        ag1 = TKAgent(self.canvas, (37, 1), self.get_next_color())
         self.agents = [ag1]
+        # Draw vertical lines
         for i in range(grid_size, win_w, grid_size):
             self.canvas.create_line((i, 0, i, win_h), fill="grey")
+        # Draw horizontal lines
         for i in range(grid_size, win_h, grid_size):
             self.canvas.create_line((0, i, win_w, i), fill="grey")
-        for i in range(scenario.height):
-            for j in range(scenario.width):
-                if scenario.map[i][j] == 0:
+        # Draw shelves
+        for i in range(grid.height):
+            for j in range(grid.width):
+                if grid[i][j] == 0:
                     self.canvas.create_rectangle(
-                        rect_pos_to_coords(j, i),
+                        rect_pos_to_coordinates(j, i),
                         fill="black",
                         outline="black"
                     )
-        self.window.bind("<Key>", self.toggle_state)
-        self.state = State.PAUSED
-        self.positions = [(2,4),(2,3),(2,2),(2,1)]
-
+        self.positions = AStarPlanner.plan(ag1.position, (58,38), grid)
     def toggle_state(self, event):
         if event.char == " ":
             if self.state == State.RUNNING:
@@ -81,11 +88,13 @@ class TkinterSimulation(Simulation):
                 self.status_label.config(text=self.running_text)
             else:
                 raise RuntimeError("Unknown state")
+
     def update(self):
         if self.state == State.RUNNING:
             if len(self.positions) > 0:
                 new_pos = self.positions.pop()
                 self.agents[0].move_to(new_pos)
+                # self.status_label.config(text=str(self.agents[0].position))
         self.window.after(self.DT, self.update)
 
     def get_next_color(self):
