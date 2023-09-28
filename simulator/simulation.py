@@ -1,14 +1,14 @@
 import tkinter as tk
 from abc import ABC, abstractmethod
-from grid import Grid
-from agent import TKAgent
-from utils import rect_pos_to_coordinates
+from .grid import Grid
+from .agent import TKAgent
+from .tkinter_utils import rect_pos_to_coordinates
 from enum import Enum, auto
-from planner.a_star_planner import AStarPlanner
+from planner import AStarPlanner
 
 
 class Simulation(ABC):
-    DT = 100
+    DT = 50
 
     @abstractmethod
     def start(self) -> None:
@@ -40,7 +40,6 @@ class TkinterSimulation(Simulation):
     """
 
     """
-
     def __init__(self, grid: Grid, grid_size: int = 10):
         win_w, win_h = grid.width * grid_size, grid.height * grid_size
         # utilities attributes
@@ -56,7 +55,7 @@ class TkinterSimulation(Simulation):
         self.window.resizable(False, False)
         self.canvas = tk.Canvas(self.window, bg='white', width=win_w, height=win_h)
         self.status_label = tk.Label(self.window, text=self.paused_text)
-        self.window.bind("<Key>", self.toggle_state)
+        self.window.bind("<Key>", self.keypress_handler)
         self.canvas.pack()
         self.status_label.pack()
         # Agents creation
@@ -78,16 +77,21 @@ class TkinterSimulation(Simulation):
                         outline="black"
                     )
         self.positions = AStarPlanner.plan(ag1.position, (58,38), grid)
-    def toggle_state(self, event):
-        if event.char == " ":
-            if self.state == State.RUNNING:
-                self.state = State.PAUSED
-                self.status_label.config(text=self.paused_text)
-            elif self.state == State.PAUSED:
-                self.state = State.RUNNING
-                self.status_label.config(text=self.running_text)
-            else:
-                raise RuntimeError("Unknown state")
+    def keypress_handler(self, event):
+        match event.char:
+            case " ":
+                if self.state == State.RUNNING:
+                   self.state = State.PAUSED
+                   self.status_label.config(text=self.paused_text)
+                elif self.state == State.PAUSED:
+                   self.state = State.RUNNING
+                   self.status_label.config(text=self.running_text)
+                else:
+                   raise RuntimeError("Unknown state")
+            case "q":
+                self.window.quit()
+            case _:
+                pass
 
     def update(self):
         if self.state == State.RUNNING:

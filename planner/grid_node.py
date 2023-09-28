@@ -1,5 +1,5 @@
 from typing import List
-from grid import Grid
+from simulator.grid import Grid
 
 
 class GridNode:

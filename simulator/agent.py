@@ -1,7 +1,7 @@
 from typing import Tuple
 from abc import ABC, abstractmethod
 import tkinter as tk
-from utils import rect_pos_to_coordinates, move_from_to
+from .tkinter_utils import rect_pos_to_coordinates, move_from_to
 class Agent(ABC):
     """
 

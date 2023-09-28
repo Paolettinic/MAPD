@@ -47,12 +47,6 @@ class AStarPlanner:
                     adj_node.parent = n
                     fringe.put(adj_node)
 
-
-
-
-
-
-
     @classmethod
     def _get_path(cls, node: GridNode):
         path = []

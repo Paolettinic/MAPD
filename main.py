@@ -1,11 +1,9 @@
 #!/
 import argparse
 
-import cv2
-import cv2 as cv
 import pathlib
-from grid import Grid
-from simulation import Simulation, TkinterSimulation
+from simulator import Grid
+from simulator import TkinterSimulation
 
 
 def main(args):
