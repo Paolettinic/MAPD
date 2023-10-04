@@ -9,7 +9,6 @@ from simulator import TkinterSimulation
 def main(args):
     warehouse_grid = Grid(args["map"])
     simulation = TkinterSimulation(warehouse_grid)
-
     simulation.start()
 
 if __name__ == "__main__":
