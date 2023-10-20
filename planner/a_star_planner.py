@@ -1,11 +1,10 @@
-from typing import Any
 from .grid_node import GridNode
 from queue import PriorityQueue
-from dataclasses import dataclass, field
 
 
 class AStarPlanner:
 
+    # TODO: change lines 25:26. Time to find node in fringe should be O(1).
     @classmethod
     def plan(cls, start_position, target_position, grid):
         start = GridNode(start_position)
@@ -14,12 +13,12 @@ class AStarPlanner:
         start.h = start.manhattan(target)
         start.f = start.g + start.h
         fringe = PriorityQueue()
-        closed = []
+        closed = set()
         fringe.put(start)
 
         while not fringe.empty():
-            n: GridNode = fringe.get(block=False)
-            closed.append(n)
+            n: GridNode = fringe.get()
+            closed.add(n)
             if n == target:
                 return cls._get_path(n)
             new_cost = n.g + 1
@@ -46,6 +45,7 @@ class AStarPlanner:
                     adj_node.f = adj_node.g + adj_node.h
                     adj_node.parent = n
                     fringe.put(adj_node)
+        raise RuntimeWarning(f"Target position {target_position} unreachable")
 
     @classmethod
     def _get_path(cls, node: GridNode):

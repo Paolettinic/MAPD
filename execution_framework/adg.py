@@ -1,6 +1,7 @@
 from typing import Dict, List
 from planstep import PlanStep
-from pprint import pprint
+
+
 class ADG:
     @classmethod
     def from_plans(cls, plans: Dict[str, List[PlanStep]]):
@@ -23,20 +24,3 @@ class ADG:
                                 graph[plan_step_i].append(plan_step_j)
                                 break
         return graph
-
-if __name__ == "__main__":
-    plans = {
-        "r1":[
-            PlanStep(0, "n", (0, 0), (0, 1)),
-            PlanStep(1, "s", (0, 1), (0, 2)),
-            PlanStep(2, "w", (0, 3), (0, 4)),
-            PlanStep(3, "e", (0, 4), (0, 5))
-        ],
-        "r2": [
-            PlanStep(0, "n", (1, 0), (1, 1)),
-            PlanStep(1, "e", (1, 1), (1, 2)),
-            PlanStep(2, "w", (1, 2), (0, 2)),
-            PlanStep(3, "s", (0, 2), (0, 3))
-        ]
-    }
-    pprint(ADG.from_plans(plans))
