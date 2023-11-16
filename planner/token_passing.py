@@ -77,8 +77,8 @@ class TokenPassing:
         else:
             raise RuntimeError("Either specify a path or a path_function")
         self.token.paths[agent] = path
-        print("PATH FOR AGENT", agent)
-        print(path)
+        #print("PATH FOR AGENT", agent)
+        #print(path)
         self.tp_agents[agent].assign_path(path)
 
     def add_tasks(self, new_tasks: List[Task]):
@@ -100,7 +100,7 @@ class TokenPassing:
         while any([self.tp_agents[ag].requires_token for ag in self.tp_agents]):
             for agent in self.tp_agents:
                 if self.tp_agents[agent].requires_token:
-                    print(agent)
+                    # print(agent)
                     # Token is assigned to agent
                     self.tp_agents[agent].requires_token = False
                     endpoints = [self.token.paths[ag][0] for ag in self.token.paths if ag != agent]
@@ -115,7 +115,7 @@ class TokenPassing:
                     #    ag for ag in self.tp_agents if self.tp_agents[agent].agent.position in endpoints and ag != agent
                     # }
                     if len(clear_tasks) > 0:
-                        print(agent, "clear task")
+                        # print(agent, "clear task")
                         task = min(
                             clear_tasks,
                             key=lambda t: manhattan_distance(self.tp_agents[agent].agent.position, t.s)
@@ -125,14 +125,14 @@ class TokenPassing:
                         self.assign_path_to_agent(agent, path_function=self.path1, task=task)
                     elif len(tasks_with_goal_eq_agent_pos) == 0 and self.tp_agents[
                         agent].agent.position not in endpoints:
-                        print(agent, "STAY")
-                        print(tasks_with_goal_eq_agent_pos)
-                        print(self.tp_agents[agent].agent.position)
-                        print(endpoints)
-                        self.assign_path_to_agent(agent, path=[self.tp_agents[agent].agent.position])
+                        # print(agent, "STAY")
+                        # print(tasks_with_goal_eq_agent_pos)
+                        # print(self.tp_agents[agent].agent.position)
+                        # print(endpoints)
+                        self.assign_path_to_agent(agent, path=[((self.tp_agents[agent].agent.position), self.timestep)])
                     else:
-                        print(tasks_with_goal_eq_agent_pos)
-                        print(agent, "GOTO START")
+                        # print(tasks_with_goal_eq_agent_pos)
+                        # print(agent, "GOTO START")
                         # path = self.path2(self.tp_agents[agent])
                         # print(path)
                         # print(self.tp_agents[agent].agent)
