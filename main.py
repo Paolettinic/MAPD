@@ -7,8 +7,7 @@ from simulator import TkinterSimulation
 
 
 def main(args):
-    warehouse_grid = Grid(args["map"])
-    simulation = TkinterSimulation(warehouse_grid, args["scenario"])
+    simulation = TkinterSimulation(args["scenario"])
     simulation.start()
 
 
@@ -20,12 +19,6 @@ if __name__ == "__main__":
         "-s", "--simulator",
         default="Tkinter",
         help="Which simulator to use; currently supported: Tkinter (default), CoppeliaSim"
-    )
-
-    parser.add_argument(
-        "map",
-        type=pathlib.Path,
-        help="Path of the map file"
     )
 
     parser.add_argument(

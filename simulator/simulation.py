@@ -1,12 +1,14 @@
+import json
 import pathlib
 import tkinter as tk
 from abc import ABC, abstractmethod
-from .grid import Grid
-from .agent import TKAgent
-from .tkinter_utils import rect_pos_to_coordinates
 from enum import Enum, auto
-from planner import AStarPlanner
-import json
+
+from planner import TokenPassing, Task
+from .agent import TKAgent
+from .grid import Grid
+from .shelf import Shelf
+from .tkinter_utils import rect_pos_to_coordinates
 
 
 class Simulation(ABC):
@@ -34,7 +36,12 @@ class TkinterSimulation(Simulation):
     """
 
     """
-    def __init__(self, grid: Grid, scenario_path: pathlib.Path, grid_size: int = 10):
+    def __init__(self, scenario_path: pathlib.Path, grid_size: int = 10):
+
+        # scenario opening
+        with open(scenario_path, "r") as scenario:
+            self.scenario = json.load(scenario)
+        grid = Grid(self.scenario["map"])
         self.win_w, self.win_h = grid.width * grid_size, grid.height * grid_size
         self.grid_size = grid_size
         self.grid = grid
@@ -43,7 +50,7 @@ class TkinterSimulation(Simulation):
         self.paused_text = "Paused, press SPACEBAR to resume."
         self.running_text = "Running, press SPACEBAR to pause."
         self.state = State.PAUSED
-        self.colors = ["red", "green", "blue", "purple", "yellow"]
+        self.colors = ["red", "green", "blue", "purple", "yellow", "pink"]
         self.cur_color = 0
 
         # window creation
@@ -60,13 +67,14 @@ class TkinterSimulation(Simulation):
         self.status_label.pack()
         self.pos_label.pack()
         self.agents = []
-        with open(scenario_path, "r") as scenario:
-            self.scenario = json.load(scenario)
+        self.shelves = []
 
+        self.initial_tasks = self.scenario["tasks"]
+        self.tp = None
+        self.tasks = None
         self.initialize()
 
     def initialize(self):
-
         # Draw vertical lines
         for i in range(self.grid_size, self.win_w, self.grid_size):
             self.canvas.create_line((i, 0, i, self.win_h), fill="grey")
@@ -74,38 +82,56 @@ class TkinterSimulation(Simulation):
         # Draw horizontal lines
         for i in range(self.grid_size, self.win_h, self.grid_size):
             self.canvas.create_line((0, i, self.win_w, i), fill="grey")
-
+        # Draw walls
+        for wall_pos in self.grid.walls_pos:
+            self.canvas.create_rectangle(rect_pos_to_coordinates(*wall_pos), fill="black")
         # Draw shelves
-        for pos in self.grid.shelves_pos:
-            self.canvas.create_rectangle(
-                rect_pos_to_coordinates(*pos),
-                fill="#AAA",
-                outline="black"
-            )
+        self.shelves = []
+        for pos, acc in self.grid.shelves_pos:
+            self.shelves.append(Shelf(self.canvas, pos, acc))
 
         # Stations creation
         for station in self.scenario["stations_positions"]:
-            self.canvas.create_oval(
+            self.canvas.create_rectangle(
                 rect_pos_to_coordinates(*station),
-                fill="pink",
-                outline="pink"
+                fill="orange",
+                outline="red"
             )
 
         # Agents creation
+        self.agents = []
         for position in self.scenario["agents_positions"]:
-            self.agents.append(TKAgent(self.canvas, position, self.get_next_color()))
+            self.agents.append(TKAgent(self.canvas,tuple(position), self.get_next_color()))
 
         # Task assignment
-        # TODO: substitute with actual task assignment
-        for i, ag in enumerate(self.agents):
-            ag.command_queue = [
-                {"move_to": pos}
-                for pos in AStarPlanner.plan(ag.position, (1, i+1), self.grid)
-            ]
+        self.tp = TokenPassing(self.agents, self.grid)
+        self.tasks = [Task(**task) for task in self.scenario["tasks"]]
+        self.tp.add_tasks(self.tasks)
+
+        # SIMPLE A* PATHS
+        # for i, ag in enumerate(self.agents):
+        #    ag.command_queue = [
+        #        {"move_to": pos}
+        #        for pos in AStarPlanner.plan(ag.position, (1, i+1), self.grid)
+        #
+
+    def update(self):
+        if self.state == State.RUNNING:
+            self.tp.update()
+        self.window.after(self.DT, self.update)
+
+    def get_next_color(self):
+        c = self.colors[self.cur_color]
+        self.cur_color = (self.cur_color + 1) % len(self.colors)
+        return c
+
+    def start(self) -> None:
+        self.window.after(self.DT, self.update)
+        self.window.mainloop()
 
     def hover(self, event):
         x, y = event.x, event.y
-        self.pos_label.config(text=f"({y//self.grid_size},{x//self.grid_size})")
+        self.pos_label.config(text=f"({y // self.grid_size},{x // self.grid_size})")
 
     def keypress_handler(self, event):
         match event.char:
@@ -130,27 +156,7 @@ class TkinterSimulation(Simulation):
                     self.DT -= 10
             case "r":  # reset the simulation
                 self.canvas.delete("all")
-                self.agents = []
                 self.initialize()
             case _:  # ignore any other keystroke
                 # print(event.char)
                 pass
-
-    def update(self):
-        if self.state == State.RUNNING:
-            for ag in self.agents:
-                ag.execute_command()
-
-                # new_pos = self.positions.pop()
-                # self.agents[0].move_to(new_pos)
-                # self.status_label.config(text=str(self.agents[0].position))
-        self.window.after(self.DT, self.update)
-
-    def get_next_color(self):
-        c = self.colors[self.cur_color]
-        self.cur_color = (self.cur_color + 1) % len(self.colors)
-        return c
-
-    def start(self) -> None:
-        self.window.after(self.DT, self.update)
-        self.window.mainloop()

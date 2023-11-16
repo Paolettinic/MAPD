@@ -16,14 +16,21 @@ class Grid:
             self.width = int(next(grid).split(" ")[1])
             self.grid = np.ones((self.height, self.width))
             self.shelves_pos = []
+            self.walls_pos = []
             next(grid)
             for i, row in enumerate(grid):
                 for j, cell in enumerate(row):
                     if cell == "T":
-                        is_shelf = 1 < i < self.height - 1 and 1 < j < self.width - 1
-                        if is_shelf:
-                            self.shelves_pos.append((j, i))
+                        self.walls_pos.append((j,i))
                         self.grid[i][j] = 0
+                    elif cell == "N":
+                        self.grid[i][j] = 0
+                        self.shelves_pos.append(((j,i),(j,i-1)))
+                    elif cell == "S":
+                        self.grid[i][j] = 0
+                        self.shelves_pos.append(((j,i),(j,i+1)))
+                    else:
+                        pass
 
     def save(self, path: pathlib.Path = "saved.map") -> None:
         np.save(path, self.grid)

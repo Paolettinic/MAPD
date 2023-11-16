@@ -8,6 +8,10 @@ class Agent(ABC):
     """
 
     """
+    starting_position: Tuple
+    position: Tuple
+    task: object
+    command_queue: List
 
     @abstractmethod
     def move_to(self, position: Tuple) -> None:
@@ -21,6 +25,9 @@ class Agent(ABC):
     def unload(self) -> None:
         pass
 
+    @abstractmethod
+    def update(self) -> None:
+        pass
 
 class TKAgent(Agent):
     """
@@ -28,16 +35,18 @@ class TKAgent(Agent):
     """
 
     def __init__(self, canvas: tk.Canvas, position: Tuple, color: str = "red") -> None:
+        self.starting_position = position
         self.position = position
         self.task = None
         self.canvas = canvas
+        self.color = color
         self.handler = self.canvas.create_oval(
             rect_pos_to_coordinates(*position),
             fill=color
         )
         self.command_queue: List[Dict[str, Any]] = []
 
-    def execute_command(self) -> None:
+    def update(self) -> None:
         if len(self.command_queue) > 0:
             command = self.command_queue.pop()
             action, arg = next(iter(command.items()))
@@ -66,6 +75,9 @@ class TKAgent(Agent):
 
     def unload(self) -> None:
         pass
+
+    def __str__(self):
+        return self.color
 
 
 class CoppeliaAgent(Agent):
