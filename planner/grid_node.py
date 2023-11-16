@@ -39,6 +39,9 @@ class GridNode:
     def manhattan(self, other: "GridNode"):
         return abs(self.x - other.x) + abs(self.y - other.y)
 
+    def get_path_step(self):
+        return (self.x, self.y), self.timestep
+
     def get_valid_positions(self, grid: Grid) -> Set["GridNode"]:
         valid_positions = set()
         adjacent_cells = [

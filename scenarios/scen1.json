@@ -1,10 +1,10 @@
 {
   "map" : "maps/warehouse-small.map",
-  "old_agents_positions": [
+  "agents_positions": [
     [4,2], [4,4], [4,6],
     [47,2], [47,4], [47,6]
   ],
-  "agents_positions": [
+  "old_agents_positions": [
     [4,2],
     [47,2]
   ],

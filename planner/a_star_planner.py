@@ -7,6 +7,7 @@ class AStarPlanner:
     # TODO: change lines 25:26. Time to find node in fringe should be O(1).
     @classmethod
     def plan(cls, start_position, target_position, grid, constraints: list[tuple] = None, timestep = 0):
+        print(f"CONSTRAINTS: {constraints}")
         if constraints is not None:
             constraints_grid_set = {GridNode(*constraint) for constraint in constraints}
         else:
@@ -53,10 +54,10 @@ class AStarPlanner:
 
     @classmethod
     def _get_path(cls, node: GridNode):
-        path = [(node.x, node.y)]
+        path = [node.get_path_step()]
         while node.parent.parent:
-            node = node.parent
-            path.append((node.x, node.y))
+            node: GridNode = node.parent
+            path.append(node.get_path_step())
         return path
 
 

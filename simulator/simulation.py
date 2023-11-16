@@ -55,17 +55,19 @@ class TkinterSimulation(Simulation):
 
         # window creation
         self.window = tk.Tk()
-        self.window.geometry(f'{self.win_w + 100}x{self.win_h + 20 + 20}')
+        self.window.geometry(f'{self.win_w + 100}x{self.win_h + 20 + 20 + 20}')
         self.window.title("MAPF")
         self.window.resizable(False, False)
         self.canvas = tk.Canvas(self.window, bg='white', width=self.win_w, height=self.win_h)
         self.status_label = tk.Label(self.window, text=self.paused_text)
         self.pos_label = tk.Label(self.window, text="")
+        self.timestep_label = tk.Label(self.window, text="Timestep: 0")
         self.window.bind("<Key>", self.keypress_handler)
         self.canvas.bind('<Motion>', self.hover)
         self.canvas.pack()
         self.status_label.pack()
         self.pos_label.pack()
+        self.timestep_label.pack()
         self.agents = []
         self.shelves = []
 
@@ -118,6 +120,7 @@ class TkinterSimulation(Simulation):
     def update(self):
         if self.state == State.RUNNING:
             self.tp.update()
+            self.timestep_label.config(text=f"Timestep: {self.tp.timestep}")
         self.window.after(self.DT, self.update)
 
     def get_next_color(self):

@@ -20,8 +20,8 @@ class TPAgent:
         self.agent.update()
 
     def assign_path(self, path):
-        self.agent.command_queue = [{"move_to": pos} for pos in path]
-        self.final = path[0]
+        self.agent.command_queue = [{"move_to": pos} for pos, _ in path]
+        self.final, _ = path[0]
 
 
 @dataclass
@@ -50,21 +50,21 @@ class TokenPassing:
     def __init__(self, agents: List[Agent], grid: Grid):
         self.grid = grid
         self.tp_agents = {ag: TPAgent(agent) for ag, agent in enumerate(agents)}
+        self.timestep = 0
         self.token = Token(
-            paths={ag: [self.tp_agents[ag].agent.position] for ag in self.tp_agents},
+            paths={ag: [(self.tp_agents[ag].agent.position, self.timestep)] for ag in self.tp_agents},
             tasks=[],
             assign={ag: None for ag in self.tp_agents}
         )
-        self.timestep = 0
 
     def create_constraints_for_agent(self, agent: Hashable):
         constraints = list()
         for ag in self.token.paths:
             if agent != ag:
-                for t, pos in enumerate(reversed(self.token.paths[ag])):
+                for pos, t in self.token.paths[ag]:
                     if t >= self.timestep:
-                        constraints.append((pos, t + self.timestep))  # vertex conflict constraint
-                        constraints.append((pos, t + self.timestep + 1))  # edge conflict constraint
+                        constraints.append((pos, t ))  # vertex conflict constraint
+                        constraints.append((pos, t + 1))  # edge conflict constraint
         return constraints
 
     def assign_path_to_agent(self, agent: Hashable, path_function: Callable = None, **kwargs):
@@ -78,9 +78,7 @@ class TokenPassing:
             raise RuntimeError("Either specify a path or a path_function")
         self.token.paths[agent] = path
         print("PATH FOR AGENT", agent)
-        print(list(zip(path,[self.timestep + len(path) - i for i in range(len(path))])))
-        print("CONSTRAINTS FOR AGENT", agent)
-        print(constraints)
+        print(path)
         self.tp_agents[agent].assign_path(path)
 
     def add_tasks(self, new_tasks: List[Task]):
@@ -90,7 +88,7 @@ class TokenPassing:
     def path1(self, agent: TPAgent, task: Task, constraints: List, **kwargs):
         pos_to_pickup = AStarPlanner.plan(agent.agent.position, task.s, self.grid, constraints, timestep=self.timestep)
         pickup_to_end = AStarPlanner.plan(task.s, task.g, self.grid, constraints,
-                                          timestep=self.timestep + len(pos_to_pickup) - 1)
+                                          timestep=self.timestep + len(pos_to_pickup))
         return pickup_to_end + pos_to_pickup
 
     def path2(self, agent: TPAgent, constraints: List, **kwargs):

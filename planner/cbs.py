@@ -4,6 +4,7 @@ from simulator import Agent
 
 class CBS:
     def __init__(self):
+        pass
 
 
 @dataclass

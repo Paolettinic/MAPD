@@ -1,5 +1,5 @@
 {
-  "map" : "warehouse-small.map",
+  "map" : "maps/warehouse-tiny.map",
   "agents_positions": [
     [4,2], [47,2]
   ],
