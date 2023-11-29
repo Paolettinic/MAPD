@@ -1,8 +1,6 @@
-#!/
 import argparse
 
 import pathlib
-from simulator import Grid
 from simulator import TkinterSimulation
 
 

@@ -15,8 +15,6 @@ class TPAgent:
     def update(self):
         if len(self.agent.command_queue) <= 1:
             self.requires_token = True
-        # if self.final == self.agent.position:
-        #    self.requires_token = True
         self.agent.update()
 
     def assign_path(self, path):
@@ -62,9 +60,8 @@ class TokenPassing:
         for ag in self.token.paths:
             if agent != ag:
                 for pos, t in self.token.paths[ag]:
-                    if t >= self.timestep:
-                        constraints.append((pos, t ))  # vertex conflict constraint
-                        constraints.append((pos, t + 1))  # edge conflict constraint
+                    constraints.append((pos, t))  # vertex conflict constraint
+                    constraints.append((pos, t + 1))  # edge conflict constraint
         return constraints
 
     def assign_path_to_agent(self, agent: Hashable, path_function: Callable = None, **kwargs):
@@ -72,70 +69,67 @@ class TokenPassing:
         if "path" in kwargs:
             path = kwargs["path"]
         elif path_function is not None:
-            # print("AGENT",agent)
             path = path_function(agent=self.tp_agents[agent], constraints=constraints, **kwargs)
         else:
             raise RuntimeError("Either specify a path or a path_function")
         self.token.paths[agent] = path
-        #print("PATH FOR AGENT", agent)
-        #print(path)
         self.tp_agents[agent].assign_path(path)
 
     def add_tasks(self, new_tasks: List[Task]):
-        # Add all new task, if any to the task set T
         self.token.tasks += new_tasks
 
     def path1(self, agent: TPAgent, task: Task, constraints: List, **kwargs):
-        pos_to_pickup = AStarPlanner.plan(agent.agent.position, task.s, self.grid, constraints, timestep=self.timestep)
-        pickup_to_end = AStarPlanner.plan(task.s, task.g, self.grid, constraints,
-                                          timestep=self.timestep + len(pos_to_pickup))
+        pos_to_pickup = AStarPlanner.plan(
+            start_position=agent.agent.position,
+            target_position=task.s,
+            grid=self.grid,
+            constraints=constraints,
+            timestep=self.timestep
+        )
+        pickup_to_end = AStarPlanner.plan(
+            start_position=task.s,
+            target_position=task.g,
+            grid=self.grid,
+            constraints=constraints,
+            timestep=self.timestep + len(pos_to_pickup)
+        )
         return pickup_to_end + pos_to_pickup
 
     def path2(self, agent: TPAgent, constraints: List, **kwargs):
-        path = AStarPlanner.plan(agent.agent.position, agent.agent.starting_position, self.grid, constraints,
-                                 timestep=self.timestep)
-        return path
+        return AStarPlanner.plan(
+            start_position=agent.agent.position,
+            target_position=agent.agent.starting_position,
+            grid=self.grid,
+            constraints=constraints,
+            timestep=self.timestep
+        )
 
     def update(self):
         while any([self.tp_agents[ag].requires_token for ag in self.tp_agents]):
             for agent in self.tp_agents:
-                if self.tp_agents[agent].requires_token:
-                    # print(agent)
+                cur_agent = self.tp_agents[agent]
+                if cur_agent.requires_token:
                     # Token is assigned to agent
-                    self.tp_agents[agent].requires_token = False
-                    endpoints = [self.token.paths[ag][0] for ag in self.token.paths if ag != agent]
+                    cur_agent.requires_token = False
+                    endpoints = [self.token.paths[ag][0][0] for ag in self.token.paths if ag != agent]
                     clear_tasks = [
                         t for t in self.token.tasks
                         if t.s not in endpoints and t.g not in endpoints
                     ]
                     tasks_with_goal_eq_agent_pos = {
-                        t for t in self.token.tasks if t.g == self.tp_agents[agent].agent.position
+                        t for t in self.token.tasks if t.g == cur_agent.agent.position
                     }
-                    # tasks_with_goal_eq_agent_pos = {
-                    #    ag for ag in self.tp_agents if self.tp_agents[agent].agent.position in endpoints and ag != agent
-                    # }
                     if len(clear_tasks) > 0:
-                        # print(agent, "clear task")
                         task = min(
                             clear_tasks,
-                            key=lambda t: manhattan_distance(self.tp_agents[agent].agent.position, t.s)
+                            key=lambda t: manhattan_distance(cur_agent.agent.position, t.s)
                         )
                         self.token.assign[agent] = task
                         self.token.tasks.remove(task)
                         self.assign_path_to_agent(agent, path_function=self.path1, task=task)
-                    elif len(tasks_with_goal_eq_agent_pos) == 0 and self.tp_agents[
-                        agent].agent.position not in endpoints:
-                        # print(agent, "STAY")
-                        # print(tasks_with_goal_eq_agent_pos)
-                        # print(self.tp_agents[agent].agent.position)
-                        # print(endpoints)
-                        self.assign_path_to_agent(agent, path=[((self.tp_agents[agent].agent.position), self.timestep)])
+                    elif len(tasks_with_goal_eq_agent_pos) == 0 and cur_agent.agent.position not in endpoints:
+                        self.assign_path_to_agent(agent, path=[(cur_agent.agent.position, self.timestep)])
                     else:
-                        # print(tasks_with_goal_eq_agent_pos)
-                        # print(agent, "GOTO START")
-                        # path = self.path2(self.tp_agents[agent])
-                        # print(path)
-                        # print(self.tp_agents[agent].agent)
                         self.assign_path_to_agent(agent, path_function=self.path2)
         for agent in self.tp_agents:
             self.tp_agents[agent].update()

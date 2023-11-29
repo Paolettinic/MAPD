@@ -6,7 +6,7 @@ class Grid:
     """
 
     """
-    def __init__(self, grid_file: pathlib.Path) -> None:
+    def __init__(self, grid_file: str) -> None:
         """
         :param grid_file:
         """

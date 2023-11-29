@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Set
 from simulator.grid import Grid
 
 
@@ -18,10 +18,13 @@ class GridNode:
     def same_position(self, other):
         if isinstance(other, GridNode):
             return self.x == other.x and self.y == other.y
+
     def __repr__(self):
         return str(self)
+
     def __str__(self):
         return f"x:{self.x},y:{self.y},t:{self.timestep}"
+
     def __eq__(self, other):
         if isinstance(other, GridNode):
             return \
@@ -39,13 +42,14 @@ class GridNode:
     def manhattan(self, other: "GridNode"):
         return abs(self.x - other.x) + abs(self.y - other.y)
 
-    def get_path_step(self):
-        return (self.x, self.y), self.timestep
+    def get_path_step(self, return_timestep=True):
+        pos = (self.x, self.y)
+        return pos, self.timestep if return_timestep else pos
 
-    def get_valid_positions(self, grid: Grid) -> Set["GridNode"]:
+    def get_valid_positions(self, grid: Grid, get_time: bool = True) -> Set["GridNode"]:
         valid_positions = set()
         adjacent_cells = [
-            (self.x, self.y),      # STAY
+            (self.x, self.y),  # STAY
             (self.x - 1, self.y),  # LEFT
             (self.x + 1, self.y),  # RIGHT
             (self.x, self.y + 1),  # UP
@@ -54,7 +58,7 @@ class GridNode:
         for pos_x, pos_y in adjacent_cells:
             # checking only if > 0, otherwise the last element is returned
             if pos_x > 0 and pos_y > 0 and grid[pos_y][pos_x] != 0:
-                node = GridNode((pos_x, pos_y), self.timestep + 1)
+                node = GridNode((pos_x, pos_y), (self.timestep + 1) if get_time else self.timestep)
                 node.g = self.g + 1
 
                 node.parent = self
