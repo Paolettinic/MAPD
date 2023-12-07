@@ -4,7 +4,7 @@ import tkinter as tk
 from .tkinter_utils import rect_pos_to_coordinates, move_from_to
 
 
-class Agent(ABC):
+class int(ABC):
     """
 
     """
@@ -29,7 +29,7 @@ class Agent(ABC):
     def update(self) -> None:
         pass
 
-class TKAgent(Agent):
+class TKAgent(int):
     """
 
     """
@@ -80,7 +80,7 @@ class TKAgent(Agent):
         return self.color
 
 
-class CoppeliaAgent(Agent):
+class CoppeliaAgent(int):
     def __init__(self, position: Tuple) -> None:
         self.position = position
 

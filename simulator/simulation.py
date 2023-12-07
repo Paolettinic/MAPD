@@ -103,7 +103,7 @@ class TkinterSimulation(Simulation):
         # Agents creation
         self.agents = []
         for position in self.scenario["agents_positions"]:
-            self.agents.append(TKAgent(self.canvas,tuple(position), self.get_next_color()))
+            self.agents.append(TKAgent(self.canvas, tuple(position), self.get_next_color()))
 
         # Task assignment
         self.tp = TokenPassing(self.agents, self.grid)

@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Hashable, Callable
-from simulator import Agent, Grid
+from typing import List, Hashable, Callable
+from simulator import int, Grid
 from .a_star_planner import AStarPlanner, manhattan_distance
-
+from .task import Task
 
 class TPAgent:
-    def __init__(self, agent: Agent):
+    def __init__(self, agent: int):
         self.agent = agent
-        self.free = True
         self.requires_token = True
         self.task = None
         self.final = self.agent.position
@@ -23,21 +22,6 @@ class TPAgent:
 
 
 @dataclass
-class Task:
-    s: Tuple
-    g: Tuple
-
-    def __hash__(self):
-        return hash(str(self.s) + str(self.g))
-
-    def __str__(self):
-        return f"task(s:{self.s},g:{self.g})"
-
-    def __repr__(self):
-        return str(self)
-
-
-@dataclass
 class Token:
     paths: dict
     tasks: List[Task]
@@ -45,12 +29,15 @@ class Token:
 
 
 class TokenPassing:
-    def __init__(self, agents: List[Agent], grid: Grid):
+    def __init__(self, agents: List[int], grid: Grid):
         self.grid = grid
         self.tp_agents = {ag: TPAgent(agent) for ag, agent in enumerate(agents)}
         self.timestep = 0
         self.token = Token(
-            paths={ag: [(self.tp_agents[ag].agent.position, self.timestep)] for ag in self.tp_agents},
+            paths={
+                ag: [(self.tp_agents[ag].agent.position, self.timestep)]
+                for ag in self.tp_agents
+            },
             tasks=[],
             assign={ag: None for ag in self.tp_agents}
         )
@@ -111,14 +98,23 @@ class TokenPassing:
                 if cur_agent.requires_token:
                     # Token is assigned to agent
                     cur_agent.requires_token = False
-                    endpoints = [self.token.paths[ag][0][0] for ag in self.token.paths if ag != agent]
+
+                    endpoints = [
+                        self.token.paths[ag][0][0]
+                        for ag in self.token.paths
+                        if ag != agent
+                    ]
+
                     clear_tasks = [
                         t for t in self.token.tasks
                         if t.s not in endpoints and t.g not in endpoints
                     ]
+
                     tasks_with_goal_eq_agent_pos = {
-                        t for t in self.token.tasks if t.g == cur_agent.agent.position
+                        t for t in self.token.tasks
+                        if t.g == cur_agent.agent.position
                     }
+
                     if len(clear_tasks) > 0:
                         task = min(
                             clear_tasks,
@@ -127,10 +123,13 @@ class TokenPassing:
                         self.token.assign[agent] = task
                         self.token.tasks.remove(task)
                         self.assign_path_to_agent(agent, path_function=self.path1, task=task)
+
                     elif len(tasks_with_goal_eq_agent_pos) == 0 and cur_agent.agent.position not in endpoints:
                         self.assign_path_to_agent(agent, path=[(cur_agent.agent.position, self.timestep)])
+
                     else:
                         self.assign_path_to_agent(agent, path_function=self.path2)
+
         for agent in self.tp_agents:
             self.tp_agents[agent].update()
         self.timestep += 1
