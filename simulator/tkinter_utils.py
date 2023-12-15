@@ -1,7 +1,7 @@
 from typing import Tuple
 
 
-def rect_pos_to_coordinates(pos_x, pos_y, cs=10) -> Tuple:
+def rect_pos_to_coordinates(pos_x, pos_y, cs=10) -> Tuple[int, int, int, int]:
     return pos_x * cs, pos_y * cs, pos_x * cs + cs, pos_y * cs + cs
 
 

@@ -2,6 +2,27 @@ from typing import Set
 from simulator.grid import Grid
 
 
+class GridEdge:
+    def __init__(self, position1: tuple, position2: tuple, timestep: int = 0):
+        self.x1, self.y1 = position1
+        self.x2, self.y2 = position2
+        self.timestep = timestep
+
+    def same_edge(self, other):
+        return (
+            isinstance(other, GridEdge) and
+            self.x1 == other.x1 and
+            self.x2 == other.x2 and
+            self.y1 == other.y1 and
+            self.y2 == other.y2
+        )
+
+    def __eq__(self, other):
+        return self.same_edge(other) and self.timestep == other.timestep
+
+    def __hash__(self):
+        return hash(f"{self.x1},{self.y1},{self.x2},{self.y1},{self.y2},{self.timestep}")
+
 class GridNode:
     """
     Node class representing positions in the map for tree search
@@ -16,8 +37,7 @@ class GridNode:
         self.timestep = timestep
 
     def same_position(self, other):
-        if isinstance(other, GridNode):
-            return self.x == other.x and self.y == other.y
+        return isinstance(other, GridNode) and self.x == other.x and self.y == other.y
 
     def __repr__(self):
         return str(self)
@@ -26,12 +46,12 @@ class GridNode:
         return f"x:{self.x},y:{self.y},t:{self.timestep}"
 
     def __eq__(self, other):
-        if isinstance(other, GridNode):
-            return \
-                    self.x == other.x and \
-                    self.y == other.y and \
-                    self.timestep == other.timestep
-        return False
+        return (
+            isinstance(other, GridNode) and
+            self.x == other.x and
+            self.y == other.y and
+            self.timestep == other.timestep
+        )
 
     def __hash__(self):
         return hash(f"{self.x},{self.y},{self.timestep}")

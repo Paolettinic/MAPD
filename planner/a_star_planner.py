@@ -1,5 +1,7 @@
-from .grid_node import GridNode
+from .grid_graph import GridNode, GridEdge
 from queue import PriorityQueue
+from typing import Tuple, Set
+from simulator import Grid
 
 
 class AStarPlanner:
@@ -8,19 +10,22 @@ class AStarPlanner:
     @classmethod
     def plan(
         cls,
-        start_position,
-        target_position,
-        grid,
-        constraints:
-        list[tuple] = None, timestep=0,
+        start_position: Tuple,
+        target_position: Tuple,
+        grid: Grid,
+        constraints:Set[tuple] = None,
+        timestep=0,
         get_time: bool = True
     ):
-        # print(f"CONSTRAINTS: {constraints}")
+        #print(f"A* CONSTRAINTS: {constraints}")
+        constraints_vertex_set = set()
+        constraints_edge_set = set()
         if constraints is not None:
-            constraints_grid_set = {GridNode(*constraint) for constraint in constraints}
-        else:
-            constraints_grid_set = set()
-        # print(constraints_grid_set)
+            for constraint in constraints:
+                if len(constraint) == 2: # VERTEX
+                    constraints_vertex_set.add(GridNode(*constraint))
+                elif len(constraint) == 3: # EDGE
+                    constraints_edge_set.add(GridEdge(*constraint))
         start = GridNode(start_position, timestep=timestep)
         target = GridNode(target_position)
         start.g = 0
@@ -30,14 +35,18 @@ class AStarPlanner:
         closed = set()
         fringe.put(start)
 
+        # print(f"ASTAR: {constraints_grid_set=}")
         while not fringe.empty():
             n: GridNode = fringe.get()
             closed.add(n)
             if n.same_position(target):
                 return cls._get_path(n, get_time)
             # neighbors = {adj for adj in n.get_valid_positions(grid) if adj not in constraints_grid_set}
-            neighbors = n.get_valid_positions(grid, get_time) - constraints_grid_set
+            neighbors = n.get_valid_positions(grid, get_time) - constraints_vertex_set
             for adj_node in neighbors:
+                edge = GridEdge((n.x, n.y),(adj_node.x, adj_node.y), n.timestep)
+                if edge in constraints_edge_set:
+                    continue
                 cur_t = adj_node.timestep
                 if adj_node in closed:
                     continue
@@ -63,7 +72,7 @@ class AStarPlanner:
     @classmethod
     def _get_path(cls, node: GridNode, get_time: bool = True):
         path = [node.get_path_step(get_time)]
-        while node.parent.parent:
+        while node.parent:
             node: GridNode = node.parent
             path.append(node.get_path_step(get_time))
         return path

@@ -1,5 +1,5 @@
 from .task import Task
-from simulator import int
+from simulator import Agent
 from enum import Enum, auto
 from typing import List, Dict, Any, Tuple, Union
 from simulator import Grid
@@ -7,23 +7,26 @@ from .a_star_planner import manhattan_distance
 from .cbs import CBS
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-
+from .algorithm import Algorithm
 
 class Status(Enum):
-    BUSY: auto()
-    FREE: auto()
-    RESTING: auto()
+    BUSY = auto()
+    FREE = auto()
+    RESTING = auto()
+
 
 class TargetPosition(Enum):
-    PICKUP: auto()
-    DELIVERY: auto()
-    PARK: auto()
+    PICKUP = auto()
+    DELIVERY = auto()
+    PARK = auto()
+
 
 class CAgent:
-    def __init__(self, agent: int):
+    def __init__(self, agent: Agent):
         self.agent = agent
         self.status = Status.FREE
         self.target = TargetPosition.PARK
+
     @property
     def position(self):
         return self.agent.position
@@ -42,8 +45,8 @@ class CAgent:
         self.agent.command_queue = [{"move_to": pos} for pos, _ in path]
 
 
-class Central:
-    def __init__(self, agents: List[int], grid: Grid):
+class Central(Algorithm):
+    def __init__(self, agents: List[Agent], grid: Grid):
         self.c_agents: Dict[int, CAgent] = {ag: CAgent(agent) for ag, agent in enumerate(agents)}
         self.parking_locations = [agent.starting_position for agent in agents]
         self.grid = grid
@@ -51,32 +54,32 @@ class Central:
         self.tasks: List[Task] = []
         self.executed_tasks = []
         self.task_assignment_dict = {}
-        self.location_assignments = {ag: self.c_agents[ag].position for ag in self.c_agents}
-        self.current_paths: Dict[int,List[Tuple[Tuple,int]]] = {ag: [] for ag in agents}
+        self.location_assignments = {ak: self.c_agents[ak].position for ak in self.c_agents}
+        self.current_paths: Dict[int, List[Tuple[Tuple, int]]] = {ak: [] for ak in self.c_agents}
+
     def assign_task_to_agent(self, agent_key, task, target):
         self.task_assignment_dict[task] = agent_key
         self.location_assignments[agent_key] = task.g
         self.executed_tasks.append(task)
         self.c_agents[agent_key].target = target
 
-
     def distance_from_agent(self, agent_key):
         return lambda p: manhattan_distance(self.c_agents[agent_key].position, p)
 
-    def build_cost_matrix(self, free_agents: List[int], endpoints: List[Dict[str, Any]]):
+    @staticmethod
+    def build_cost_matrix(free_agents: List[int], endpoints: List[Dict[str, Any]]):
         C = max([max(e["costs"]) for e in endpoints]) + 1
         cost_matrix = np.zeros((len(free_agents), len(endpoints)))
         for i, agent_k in enumerate(free_agents):
             for j, endpoint in enumerate(endpoints):
                 if endpoint["type"] == TargetPosition.PICKUP:
-                    cost_matrix[i][j] = len(free_agents) * C * endpoint["cost"][i]
+                    cost_matrix[i][j] = len(free_agents) * C * endpoint["costs"][i]
                 else:
-                    cost_matrix[i][j] = len(free_agents) * C**2 * endpoint["cost"][i]
+                    cost_matrix[i][j] = len(free_agents) * C ** 2 * endpoint["costs"][i]
 
         return cost_matrix
 
-
-    def assign_endpoints(self, free_agents : List[int]):
+    def assign_endpoints(self, free_agents: List[int]):
         tasks = []
         unexecuted_tasks = [t for t in self.tasks if t not in self.executed_tasks]
         for task in unexecuted_tasks:
@@ -90,7 +93,7 @@ class Central:
             {
                 "type": TargetPosition.PICKUP,
                 "position": task.s,
-                "costs" : [manhattan_distance(self.c_agents[ak].position, task.s) for ak in free_agents]
+                "costs": [manhattan_distance(self.c_agents[ak].position, task.s) for ak in free_agents]
             } for task in tasks
         ]
         num_free_agents = len(free_agents)
@@ -119,20 +122,22 @@ class Central:
         free_agents = [ag for ag in self.c_agents if self.c_agents[ag].status == Status.FREE]
         resting_agents = [ag for ag in self.c_agents if self.c_agents[ag].status == Status.RESTING]
         # endpoints = {agent_k: {"type": TargetPosition.PARK, "position":self.c_agents[agent_k].position} for agent_k in self.c_agents}
-        endpoints = {agent_k: dict() for agent_k in self.c_agents}
+        endpoints = dict()
         for agent_k in resting_agents:
             cur_agent: CAgent = self.c_agents[agent_k]
             for t in unexecuted_tasks:
                 if (
-                    cur_agent.position == t.s and
-                    self.task_assignment_dict[t] is None and
-                    not any([self.location_assignments[a] == t.g for a in self.c_agents])
+                        cur_agent.position == t.s and
+                        self.task_assignment_dict[t] is None and
+                        not any([self.location_assignments[a] == t.g for a in self.c_agents])
                 ):
                     self.assign_task_to_agent(agent_k, t, TargetPosition.DELIVERY)
-                    endpoints[agent_k] = {"type": TargetPosition.DELIVERY, "position":t.g}
-
-        endpoints.update(self.assign_endpoints(free_agents))
-        self.assign_paths_to_agents(endpoints)
+                    endpoints[agent_k] = {"type": TargetPosition.DELIVERY, "position": t.g}
+                    break
+        if len(free_agents) > 0:
+            endpoints.update(self.assign_endpoints(free_agents))
+        if endpoints:
+            self.assign_paths_to_agents(endpoints)
         for agent_key in self.c_agents:
             self.c_agents[agent_key].update()
             match self.c_agents[agent_key].status:
@@ -147,27 +152,24 @@ class Central:
 
         self.timestep += 1
 
-
-    def assign_paths_to_agents(self, endpoints: Dict[int,Dict[str, Union[TargetPosition, Tuple]]]):
+    def assign_paths_to_agents(self, endpoints: Dict[int, Dict[str, Union[TargetPosition, Tuple]]]):
         agents_tasks = {
             ak: (
                 self.c_agents[ak].position,
                 endpoints[ak]["position"]
             ) for ak in endpoints
-            if endpoints[ak] is not None
+            if endpoints[ak]
         }
-        spatio_temporal_obstacles = [st_pos for path in self.current_paths.values() for st_pos in path]
+        spatio_temporal_obstacles = {st_pos for path in self.current_paths.values() for st_pos in path}
         solutions = CBS.high_level_search(agents_tasks, self.grid, self.timestep, spatio_temporal_obstacles)
         for agent_key, path in solutions.items():
             self.assign_path_to_agent(agent_key, path, endpoints)
-
 
     def assign_path_to_agent(self, agent_key, path, endpoints):
         self.current_paths[agent_key] = path
         self.location_assignments[agent_key] = endpoints[agent_key]["position"]
         self.c_agents[agent_key].target = endpoints[agent_key]["type"]
         self.c_agents[agent_key].assign_path(path)
-
 
     def add_tasks(self, task_list: List[Task]):
         self.tasks += task_list

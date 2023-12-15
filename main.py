@@ -5,9 +5,8 @@ from simulator import TkinterSimulation
 
 
 def main(args):
-    simulation = TkinterSimulation(args["scenario"])
+    simulation = TkinterSimulation(args["scenario"], args["algorithm"])
     simulation.start()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -18,9 +17,12 @@ if __name__ == "__main__":
         default="Tkinter",
         help="Which simulator to use; currently supported: Tkinter (default), CoppeliaSim"
     )
-
     parser.add_argument(
-        "scenario",
+        "-a", "--algorithm",
+        help="Name of the algorithm to use"
+    )
+    parser.add_argument(
+        "--scenario",
         type=pathlib.Path,
         help="Path of the scenario file"
     )

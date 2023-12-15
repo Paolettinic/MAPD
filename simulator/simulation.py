@@ -4,27 +4,19 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 
-from planner import TokenPassing, Task
+from planner.algorithm_utils import get_algorithm
+from planner import Algorithm, Task
 from .agent import TKAgent
 from .grid import Grid
 from .shelf import Shelf
 from .tkinter_utils import rect_pos_to_coordinates
-
 
 class Simulation(ABC):
     DT: int = 100
 
     @abstractmethod
     def start(self) -> None:
-        pass
-
-    # @abstractmethod
-    # def pause(self) -> None:
-    #     pass
-    #
-    # @abstractmethod
-    # def resume(self) -> None:
-    #     pass
+        ...
 
 
 class State(Enum):
@@ -36,8 +28,8 @@ class TkinterSimulation(Simulation):
     """
 
     """
-    def __init__(self, scenario_path: pathlib.Path, grid_size: int = 10):
-
+    def __init__(self, scenario_path: pathlib.Path, algorithm: str, grid_size: int = 10):
+        self.algorithm_name = algorithm
         # scenario opening
         with open(scenario_path, "r") as scenario:
             self.scenario = json.load(scenario)
@@ -70,7 +62,6 @@ class TkinterSimulation(Simulation):
         self.timestep_label.pack()
         self.agents = []
         self.shelves = []
-
         self.initial_tasks = self.scenario["tasks"]
         self.tp = None
         self.tasks = None
@@ -106,21 +97,20 @@ class TkinterSimulation(Simulation):
             self.agents.append(TKAgent(self.canvas, tuple(position), self.get_next_color()))
 
         # Task assignment
-        self.tp = TokenPassing(self.agents, self.grid)
+        #self.tp = TokenPassing(self.agents, self.grid)
         self.tasks = [Task(**task) for task in self.scenario["tasks"]]
-        self.tp.add_tasks(self.tasks)
-
-        # SIMPLE A* PATHS
-        # for i, ag in enumerate(self.agents):
-        #    ag.command_queue = [
-        #        {"move_to": pos}
-        #        for pos in AStarPlanner.plan(ag.position, (1, i+1), self.grid)
-        #
+        #self.tp.add_tasks(self.tasks)
+        self.algorithm: Algorithm = get_algorithm(
+            algorithm_name=self.algorithm_name,
+            agents=self.agents,
+            grid=self.grid
+        )
+        self.algorithm.add_tasks(self.tasks)
 
     def update(self):
         if self.state == State.RUNNING:
-            self.tp.update()
-            self.timestep_label.config(text=f"Timestep: {self.tp.timestep}")
+            self.algorithm.update()
+            self.timestep_label.config(text=f"Timestep: {self.algorithm.timestep}")
         self.window.after(self.DT, self.update)
 
     def get_next_color(self):
@@ -134,7 +124,7 @@ class TkinterSimulation(Simulation):
 
     def hover(self, event):
         x, y = event.x, event.y
-        self.pos_label.config(text=f"({y // self.grid_size},{x // self.grid_size})")
+        self.pos_label.config(text=f"({x // self.grid_size},{y // self.grid_size})")
 
     def keypress_handler(self, event):
         match event.char:
@@ -157,9 +147,10 @@ class TkinterSimulation(Simulation):
             case "j":  # increase simulation speed
                 if self.DT > 20:
                     self.DT -= 10
+
             case "r":  # reset the simulation
                 self.canvas.delete("all")
                 self.initialize()
+
             case _:  # ignore any other keystroke
-                # print(event.char)
                 pass
