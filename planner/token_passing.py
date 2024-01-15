@@ -31,7 +31,7 @@ class Token:
 
 
 class TokenPassing(Algorithm):
-    def __init__(self, agents: List[Agent], grid: Grid):
+    def __init__(self, agents: List[Agent], grid: Grid, tasks: List[Task]):
         self.grid = grid
         self.tp_agents = {ag: TPAgent(agent) for ag, agent in enumerate(agents)}
         self.timestep = 0
@@ -40,7 +40,7 @@ class TokenPassing(Algorithm):
                 ag: [(self.tp_agents[ag].agent.position, self.timestep)]
                 for ag in self.tp_agents
             },
-            tasks=[],
+            tasks=tasks,
             assign={ag: None for ag in self.tp_agents}
         )
 

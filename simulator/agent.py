@@ -80,17 +80,3 @@ class TKAgent(Agent):
 
     def __str__(self):
         return self.color
-
-
-class CoppeliaAgent(Agent):
-    def __init__(self, position: Tuple) -> None:
-        self.position = position
-
-    def move_to(self, position: Tuple) -> None:
-        pass
-
-    def pickup(self, shelf_position: Tuple) -> None:
-        pass
-
-    def unload(self) -> None:
-        pass

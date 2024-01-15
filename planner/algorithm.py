@@ -8,7 +8,7 @@ class Algorithm(ABC):
     timestep: int
 
     @abstractmethod
-    def __init__(self, agents: List[Agent], grid: Grid):
+    def __init__(self, agents: List[Agent], grid: Grid, tasks: List[Task]):
         ...
     @abstractmethod
     def update(self):

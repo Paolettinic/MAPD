@@ -146,38 +146,6 @@ class CBS:
                     )
         return None  # No conflicts found
 
-        # for i in range(max_len - 1, -1, -1):
-        #    pos_to_agents = {padded_sol[a][i][0]: [] for a in padded_sol}
-        #    for a in padded_sol:
-        #        cur_agent_position, t = padded_sol[a][i]
-        #        pos_to_agents[cur_agent_position].append(a)
-        #        if len(pos_to_agents[cur_agent_position]) > 1:
-        #            ag1, ag2 = pos_to_agents[cur_agent_position][:2]
-        #            return Conflict(
-        #                type=ConflictType.VERTEX,
-        #                agent1=ag1,
-        #                agent2=ag2,
-        #                position1=cur_agent_position,
-        #                timestep=t
-        #            )
-        #    for a in padded_sol:
-        #        if i > 0:
-        #            cur_agent_position, t1 = padded_sol[a][i]
-        #            next_pos, t2 = padded_sol[a][i - 1]
-        #            if next_pos in pos_to_agents:
-        #                if len(pos_to_agents[next_pos]) > 0:
-        #                    conflict_agent = pos_to_agents[next_pos][0]
-        #                    if conflict_agent != a:
-        #                        return Conflict(
-        #                            type=ConflictType.EDGE,
-        #                            agent1=a,
-        #                            agent2=conflict_agent,
-        #                            position1=cur_agent_position,
-        #                            position2=next_pos,
-        #                            timestep=t1
-        #                        )
-        # return None
-
     @classmethod
     def compute_solutions_and_cost(
         cls,

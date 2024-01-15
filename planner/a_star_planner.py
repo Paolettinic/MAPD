@@ -78,5 +78,5 @@ class AStarPlanner:
         return path
 
 
-def manhattan_distance(pos_a: tuple, pos_b: tuple):
+def manhattan_distance(pos_a: tuple, pos_b: tuple) -> int:
     return abs(pos_a[0] - pos_b[0]) + abs(pos_a[1] - pos_b[1])

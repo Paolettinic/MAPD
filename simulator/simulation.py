@@ -11,6 +11,7 @@ from .grid import Grid
 from .shelf import Shelf
 from .tkinter_utils import rect_pos_to_coordinates
 
+
 class Simulation(ABC):
     DT: int = 100
 
@@ -28,6 +29,7 @@ class TkinterSimulation(Simulation):
     """
 
     """
+
     def __init__(self, scenario_path: pathlib.Path, algorithm: str, grid_size: int = 10):
         self.algorithm_name = algorithm
         # scenario opening
@@ -65,6 +67,7 @@ class TkinterSimulation(Simulation):
         self.initial_tasks = self.scenario["tasks"]
         self.tp = None
         self.tasks = None
+        self.algorithm = None
         self.initialize()
 
     def initialize(self):
@@ -97,15 +100,16 @@ class TkinterSimulation(Simulation):
             self.agents.append(TKAgent(self.canvas, tuple(position), self.get_next_color()))
 
         # Task assignment
-        #self.tp = TokenPassing(self.agents, self.grid)
+        # self.tp = TokenPassing(self.agents, self.grid)
         self.tasks = [Task(**task) for task in self.scenario["tasks"]]
-        #self.tp.add_tasks(self.tasks)
+        # self.tp.add_tasks(self.tasks)
         self.algorithm: Algorithm = get_algorithm(
             algorithm_name=self.algorithm_name,
             agents=self.agents,
-            grid=self.grid
+            grid=self.grid,
+            tasks=self.tasks
         )
-        self.algorithm.add_tasks(self.tasks)
+        # self.algorithm.add_tasks(self.tasks)
 
     def update(self):
         if self.state == State.RUNNING:

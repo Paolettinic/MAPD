@@ -46,12 +46,12 @@ class CAgent:
 
 
 class Central(Algorithm):
-    def __init__(self, agents: List[Agent], grid: Grid):
+    def __init__(self, agents: List[Agent], grid: Grid, tasks: List[Task]):
         self.c_agents: Dict[int, CAgent] = {ag: CAgent(agent) for ag, agent in enumerate(agents)}
         self.parking_locations = [agent.starting_position for agent in agents]
         self.grid = grid
         self.timestep = 0
-        self.tasks: List[Task] = []
+        self.tasks: List[Task] = tasks
         self.executed_tasks = []
         self.task_assignment_dict = {}
         self.location_assignments = {ak: self.c_agents[ak].position for ak in self.c_agents}
