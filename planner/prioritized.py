@@ -136,7 +136,7 @@ class PrioritizedTaskPlanning(Algorithm):
         distance_matrix = self.graph.get_distance_matrix()
         distance_matrix = distance_matrix.tolist()
         dm = elkai.DistanceMatrix(distance_matrix)
-        hamiltonian_cycle = dm.solve_tsp()
+        hamiltonian_cycle = dm.solve_tsp(runs=1)
         current_agent = -1
         task_assignment = {}
         for node in hamiltonian_cycle:
