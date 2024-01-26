@@ -1,2 +1,2 @@
-# MAPF
-Multi Agent Path Finding in warehouse environment, project for the Planning and Reasoning exam.
+# MAPD
+Multi Agent Pickup and Delivery in warehouse environment, project for the Planning and Reasoning exam.
