@@ -13,11 +13,6 @@ if __name__ == "__main__":
         description='Simulates the chosen MAPF algorithm in a warehouse environment',
     )
     parser.add_argument(
-        "-s", "--simulator",
-        default="Tkinter",
-        help="Which simulator to use; currently supported: Tkinter (default), CoppeliaSim"
-    )
-    parser.add_argument(
         "-a", "--algorithm",
         help="Name of the algorithm to use"
     )

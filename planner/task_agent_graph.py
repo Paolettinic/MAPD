@@ -56,14 +56,14 @@ class TaskAgentGraph:
             raise RuntimeError("In order to add an edge, its vertices must first be added to the graph")
 
     def get_distance_matrix(self):
-        #empty_matrix = [[0 for _ in self.vertices] for _ in self.vertices]
+        # empty_matrix = [[0 for _ in self.vertices] for _ in self.vertices]
         import numpy as np
-        distance_matrix = np.zeros((len(self.vertices),len(self.vertices)))
+        distance_matrix = np.zeros((len(self.vertices), len(self.vertices)))
 
         for edge in self.edges:
             v1, v2, weight = edge.get_components()
             distance_matrix[v1.vertex_id][v2.vertex_id] = weight
-        #print(distance_matrix)
+        # print(distance_matrix)
         return distance_matrix
 
     # def __getitem__(self, item):
