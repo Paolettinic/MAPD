@@ -4,6 +4,8 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 
+from numpy import random
+
 from planner.algorithm_utils import get_algorithm
 from planner import Algorithm, Task
 from .agent import TKAgent
@@ -93,6 +95,16 @@ class TkinterSimulation(Simulation):
                 fill="orange",
                 outline="red"
             )
+        # Uncomment this code to create a random set of tasks in a txt file, copy the resulting set in 
+        # a scenario json file
+        #no_tasks = 100
+        #with open("tasks.txt","w") as task_file:
+        #    for i in range(no_tasks):
+        #        picked_shelf : Shelf = random.choice(self.shelves, size=1)[0]
+        #        ts = picked_shelf.access_position
+        #        tg = self.scenario["stations_positions"][random.choice(range(len(self.scenario["stations_positions"])),1)[0]]
+        #        task_file.write("{"+f"'s':[{ts[0]},{ts[1]}], 'g':[{tg[0]},{tg[1]}], 'r':0"+"}")
+        #return   
 
         # Agents creation
         self.agents = []

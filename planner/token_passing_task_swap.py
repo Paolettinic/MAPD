@@ -163,7 +163,7 @@ class TokenPassingTaskSwap(Algorithm):
         for agent_key in self.tp_agents:
             self.tp_agents[agent_key].update()
             task_assigned_to_agent = self.token.assign[agent_key]
-            if self.tp_agents[agent_key].position == task_assigned_to_agent.s:
-                if task_assigned_to_agent in self.token.tasks:
+            if task_assigned_to_agent:
+                if self.tp_agents[agent_key].position == task_assigned_to_agent.s and task_assigned_to_agent in self.token.tasks:
                     self.token.tasks.remove(self.token.assign[agent_key])
         self.timestep += 1

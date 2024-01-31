@@ -5,8 +5,8 @@ from itertools import product
 from simulator import Agent, Grid
 from .a_star_planner import AStarPlanner, manhattan_distance
 from .algorithm import Algorithm
-import elkai
 from .timing import timeit
+import os
 
 
 class PrioritizedAgent:
@@ -29,6 +29,32 @@ class PrioritizedAgent:
 
 
 class PrioritizedTaskPlanning(Algorithm):
+    LKH_PATH = "planner/LKH-3.0.9"
+    PROBLEM_FILE_NAME = "problem.tsp"
+    PARAMETER_FILE_NAME = "parameters.par"
+    TOUR_FILE_NAME = "solution.tour"
+    PROBLEM_FILE = os.path.join(LKH_PATH, PROBLEM_FILE_NAME) 
+    PARAMETER_FILE = os.path.join(LKH_PATH, PARAMETER_FILE_NAME)
+    TOUR_FILE = os.path.join(LKH_PATH, TOUR_FILE_NAME)
+    LKH_EXECUTABLE = os.path.join(LKH_PATH, "LKH")
+
+    PARAMETER_VALUES = {
+        "PROBLEM_FILE": f"{PROBLEM_FILE}",
+        "MAX_TRIALS": "10000",
+        "TIME_LIMIT": "1000",
+        "RUNS": "5",
+        "TRACE_LEVEL": "0",
+        "TOUR_FILE": f"{TOUR_FILE}",
+    }
+    PROBLEM_VALUES = {
+        "NAME": "TA-Prioritized",
+        "COMMENT": "TA-prioritized",
+        "TYPE": "ATSP",
+        "DIMENSION": "", # this has to be changed with len(agents) + len(tasks)
+        "EDGE_WEIGHT_TYPE": "EXPLICIT",
+        "DISPLAY_DATA_TYPE": "NO_DISPLAY",
+        "EDGE_WEIGHT_FORMAT": "FULL_MATRIX",
+    }
 
     def __init__(self, agents: List[Agent], grid: Grid, tasks: List[Task]):
         self.agents = {i: PrioritizedAgent(agent) for i, agent in enumerate(agents)}
@@ -63,7 +89,8 @@ class PrioritizedTaskPlanning(Algorithm):
                 ) 
         for agent_key in cur_agents_paths:
             self.agents[agent_key].assign_path(cur_agents_paths[agent_key])
-            
+         
+    
 
     def find_path_for_agent(
         self,
@@ -129,14 +156,48 @@ class PrioritizedTaskPlanning(Algorithm):
     def add_tasks(self, tasks: List[Task]):
         self.tasks += tasks
 
+    def lkh_solve(self, distance_matrix) -> List[int]:
+        import time
+        # writing parameter file
+        with open(self.PARAMETER_FILE, 'w+') as parameter_file:
+            parameter_file.write("SPECIAL\n")
+            for key, value in self.PARAMETER_VALUES.items():
+                parameter_file.write(key + " = " + value + "\n")
+        # writing problem file
+        with open(self.PROBLEM_FILE, 'w+') as problem_file:
+            self.PROBLEM_VALUES["DIMENSION"] = str(len(distance_matrix))
+            for key, value in self.PROBLEM_VALUES.items():
+                problem_file.write(key + " : " + value + "\n")
+            problem_file.write("EDGE_WEIGHT_SECTION\n")
+            for row in distance_matrix:
+                problem_file.write(" ".join(str(int(val)) for val in row) + "\n")
+            problem_file.write("EOF\n")
+
+        print("solving using LKH")
+        os.system(self.LKH_EXECUTABLE + " " + self.PARAMETER_FILE)
+        print("LKH solver returned, waiting 2 seconds for file to write...")
+        time.sleep(2)
+        print("Opening generated tour file...")
+        with open(self.TOUR_FILE, 'r') as solution_file:
+            while not "TOUR_SECTION" in solution_file.readline():
+                pass
+            tour = [int(s) - 1 for s in solution_file.readlines()[:-2]]
+            tour += [tour[0]]
+        return tour
+
     @timeit
     def assign_tasks_to_agents(self) -> Dict[int, List[Task]]:
         print("Searching an assignment for tasks")
         # print(f"{self.graph.vertices}")
         distance_matrix = self.graph.get_distance_matrix()
+        with open("matrix.np",'w') as dmfile:
+            for row in distance_matrix:
+                dmfile.write(" ".join(str(el) for el in row))
+                dmfile.write("\n")
+
         distance_matrix = distance_matrix.tolist()
-        dm = elkai.DistanceMatrix(distance_matrix)
-        hamiltonian_cycle = dm.solve_tsp(runs=1)
+
+        hamiltonian_cycle = self.lkh_solve(distance_matrix)
         current_agent = -1
         task_assignment = {}
         for node in hamiltonian_cycle:
@@ -147,26 +208,27 @@ class PrioritizedTaskPlanning(Algorithm):
                 task_assignment[self.graph.vertices[current_agent].data] = []
             else:
                 task_assignment[self.graph.vertices[current_agent].data].append(self.graph.vertices[node].data)
+        print({agent: len(task_assignment[agent]) for agent in task_assignment})
         return task_assignment 
 
     def compute_weight(self, vertex1: TaskAgentVertex, vertex2: TaskAgentVertex):
         vertex1_is_agent = isinstance(vertex1.data, int)
         vertex2_is_agent = isinstance(vertex2.data, int)
         if not vertex2_is_agent:
-            if vertex1_is_agent:  # vertex2 is a task, vertex1 is an agent
-                assert isinstance(vertex2.data, Task)
+            if vertex1_is_agent:  # vertex1 is an agent, vertex2 is a task
                 assert isinstance(vertex1.data, int)
+                assert isinstance(vertex2.data, Task)
                 return max(
-                    manhattan_distance(self.agents[vertex1.data].agent.starting_position, vertex2.data.s),
+                    manhattan_distance(self.agents[vertex1.data].parking_position, vertex2.data.s),
                     vertex2.data.r
                 )
             assert isinstance(vertex1.data, Task)
             assert isinstance(vertex2.data, Task)
-            return (  # vertex2 is a task, vertex1 is a task
+            return (  # vertex1 is a task, vertex2 is a task
                     manhattan_distance(vertex1.data.s, vertex1.data.g) +
-                    manhattan_distance(vertex1.data.g, vertex2.data.s)
+                    manhattan_distance(vertex1.data.g, vertex2.data.s) 
             )
-        if not vertex1_is_agent:  # vertex2 is an agent, vertex1 is a task
+        if not vertex1_is_agent:  # vertex1 is a task , vertex2 is an agent
             assert isinstance(vertex1.data, Task)
             return manhattan_distance(vertex1.data.s, vertex1.data.g)
         # vertex1 is an agent, vertex2 is an agent

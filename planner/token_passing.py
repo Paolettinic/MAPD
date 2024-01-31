@@ -53,8 +53,9 @@ class TokenPassing(Algorithm):
                     constraints.add((pos, t + 1))  # edge conflict constraint
         return constraints
 
-    def assign_path_to_agent(self, agent: int, path_function: Callable = None, **kwargs):
+    def assign_path_to_agent(self, agent: int, **kwargs):
         constraints = self.create_constraints_for_agent(agent)
+        path_function = kwargs["path_function"] if "path_function" in kwargs else None
         if "path" in kwargs:
             path = kwargs["path"]
         elif path_function is not None:
@@ -64,8 +65,8 @@ class TokenPassing(Algorithm):
         self.token.paths[agent] = path
         self.tp_agents[agent].assign_path(path)
 
-    def add_tasks(self, new_tasks: List[Task]):
-        self.token.tasks += new_tasks
+    def add_tasks(self, tasks: List[Task]):
+        self.token.tasks += tasks
 
     def path1(self, agent: TPAgent, task: Task, constraints: Set[Tuple], **kwargs):
         pos_to_pickup = AStarPlanner.plan(
@@ -106,16 +107,15 @@ class TokenPassing(Algorithm):
                         for ag in self.token.paths
                         if ag != agent
                     ]
+                    clear_tasks = list(filter(
+                        lambda t : t.s not in endpoints and t.g not in endpoints,
+                        self.token.tasks
+                    ))
 
-                    clear_tasks = [
-                        t for t in self.token.tasks
-                        if t.s not in endpoints and t.g not in endpoints
-                    ]
-
-                    tasks_with_goal_eq_agent_pos = {
-                        t for t in self.token.tasks
-                        if t.g == cur_agent.agent.position
-                    }
+                    tasks_with_goal_eq_agent_pos = set(filter(
+                        lambda t: t.g == cur_agent.agent.position,
+                        self.token.tasks
+                    ))
 
                     if len(clear_tasks) > 0:
                         task = min(
