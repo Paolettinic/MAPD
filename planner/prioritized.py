@@ -45,6 +45,7 @@ class PrioritizedTaskPlanning(Algorithm):
         "RUNS": "5",
         "TRACE_LEVEL": "0",
         "TOUR_FILE": f"{TOUR_FILE}",
+        "MAKESPAN": "YES"
     }
     PROBLEM_VALUES = {
         "NAME": "TA-Prioritized",
@@ -73,7 +74,6 @@ class PrioritizedTaskPlanning(Algorithm):
                 ) 
                 for agent_key in task_assignment
         }
-        # TODO: Modify the line below to take into account path lengths
         open_agent_set = set(cur_agents_paths.keys())
         while open_agent_set:
             cur_agent = max(open_agent_set, key=lambda ag : len(cur_agents_paths[ag]))

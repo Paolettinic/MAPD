@@ -5,3 +5,4 @@ TIME_LIMIT = 1000
 RUNS = 5
 TRACE_LEVEL = 0
 TOUR_FILE = planner/LKH-3.0.9/solution.tour
+MAKESPAN = YES

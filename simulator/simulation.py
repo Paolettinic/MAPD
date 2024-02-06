@@ -4,8 +4,6 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 
-from numpy import random
-
 from planner.algorithm_utils import get_algorithm
 from planner import Algorithm, Task
 from .agent import TKAgent
@@ -67,9 +65,12 @@ class TkinterSimulation(Simulation):
         self.agents = []
         self.shelves = []
         self.initial_tasks = self.scenario["tasks"]
-        self.tp = None
-        self.tasks = None
-        self.algorithm = None
+        self.tasks = []
+        self.online_algorithms = [
+            "token_passing",
+            "token_passing_task_swap",
+            "central"
+        ]
         self.initialize()
 
     def initialize(self):
@@ -97,6 +98,7 @@ class TkinterSimulation(Simulation):
             )
         # Uncomment this code to create a random set of tasks in a txt file, copy the resulting set in 
         # a scenario json file
+        #from numpy import random
         #no_tasks = 100
         #with open("tasks.txt","w") as task_file:
         #    for i in range(no_tasks):
@@ -119,12 +121,15 @@ class TkinterSimulation(Simulation):
             algorithm_name=self.algorithm_name,
             agents=self.agents,
             grid=self.grid,
-            tasks=self.tasks
+            tasks=[] if self.algorithm_name in self.online_algorithms else self.tasks
         )
         # self.algorithm.add_tasks(self.tasks)
 
     def update(self):
         if self.state == State.RUNNING:
+            if self.algorithm_name in self.online_algorithms:
+                new_tasks = self.get_new_tasks(self.algorithm.timestep)
+                self.algorithm.add_tasks(new_tasks)
             self.algorithm.update()
             self.timestep_label.config(text=f"Timestep: {self.algorithm.timestep}")
         self.window.after(self.DT, self.update)
@@ -141,6 +146,10 @@ class TkinterSimulation(Simulation):
     def hover(self, event):
         x, y = event.x, event.y
         self.pos_label.config(text=f"({x // self.grid_size},{y // self.grid_size})")
+    
+    def get_new_tasks(self, timestep: int):
+        new_tasks = list(filter(lambda t: t.r == timestep, self.tasks))
+        return new_tasks
 
     def keypress_handler(self, event):
         match event.char:
