@@ -99,15 +99,7 @@ class TokenPassingTaskSwap(Algorithm):
         )
 
     def get_task(self, agent_key: int, current_token: Token) -> bool:
-        #print("AGENT KEY", agent_key)
-        #print(f"{current_token=}")
         cur_agent = self.tp_agents[agent_key]
-
-        #other_agents_endpoints = [
-        #    current_token.paths[ag][0][0]
-        #    for ag in current_token.paths
-        #    if ag != agent_key
-        #]
         clear_tasks = []
         for t in current_token.tasks:
             for executing_agents_key in current_token.paths:
@@ -115,35 +107,17 @@ class TokenPassingTaskSwap(Algorithm):
                 if t != current_token.assign[executing_agents_key] and t.s != endpoint and t.g != endpoint:
                     clear_tasks.append(t)
                     
-        #clear_tasks = list(filter(
-        #    lambda t : t.s not in other_agents_endpoints and t.g not in other_agents_endpoints,
-        #    current_token.tasks
-        #))
-        #clear_tasks = [
-        #    t for t in current_token.tasks
-        #    if t.s not in other_agents_endpoints and t.g not in other_agents_endpoints
-        #]
-
         tasks_with_goal_eq_agent_pos = set(filter(
             lambda t: t.g == cur_agent.agent.position,
             current_token.tasks
         ))
-
-        #tasks_with_goal_eq_agent_pos = {
-        #    t for t in current_token.tasks
-        #    if t.g == cur_agent.position
-        #}
-
         while clear_tasks:
-            #print(f"{clear_tasks=}")
             task = min(
                 clear_tasks,
                 key=lambda t: manhattan_distance(cur_agent.position, t.s)
             )
-            #print(f"{task=}")
             clear_tasks.remove(task)
             assigned_tasks = list(current_token.assign.values())
-            #print(current_token.assign)
             if task not in assigned_tasks:
                 current_token.assign[agent_key] = task
                 self.assign_path_to_agent(
@@ -152,10 +126,8 @@ class TokenPassingTaskSwap(Algorithm):
                     path_function=self.path1,
                     task=task
                 )
-                #print("TASK", task, "ASSIGNED TO", agent_key)
                 return True
             else:
-                #print("OPPORTUNITY")
                 token_copy = deepcopy(current_token)
                 agents = list(current_token.assign.keys())
                 agent_assigned_to_task = agents[assigned_tasks.index(task)]
@@ -164,26 +136,19 @@ class TokenPassingTaskSwap(Algorithm):
                 new_path = self.path1(cur_agent, task, self.create_constraints_for_agent(agent_key, current_token))
                 _, new_timestep = new_path[0]
                 _, old_timestep = current_token.paths[agent_assigned_to_task][0]
-                #print(new_timestep, old_timestep)
                 if new_timestep < old_timestep:
-                    #print("takes less time")
                     if self.get_task(agent_assigned_to_task, current_token):
                         print(f"TASK SWAPPED {agent_key}->{agent_assigned_to_task}")
                         self.assign_path_to_agent(agent=agent_key, current_token=current_token, path=new_path)
                         return True
-                #print("Restoring token")
                 self.token = token_copy
                 current_token = self.token
             if cur_agent.position != cur_agent.agent.starting_position:
-                #print("GO HOME")
                 self.assign_path_to_agent(agent=agent_key, current_token=current_token, path_function=self.path2)
             else:
                 if not tasks_with_goal_eq_agent_pos:
-                    #print("stay")
                     self.assign_path_to_agent(agent=agent_key, current_token=current_token, path=[(cur_agent.position, self.timestep)])
-                    #print(current_token)
                 else:
-                    #print("GO HOME")
                     self.assign_path_to_agent(agent=agent_key, current_token=current_token, path_function=self.path2)
                 return True
         return False

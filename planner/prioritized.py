@@ -190,10 +190,10 @@ class PrioritizedTaskPlanning(Algorithm):
         print("Searching an assignment for tasks")
         # print(f"{self.graph.vertices}")
         distance_matrix = self.graph.get_distance_matrix()
-        with open("matrix.np",'w') as dmfile:
-            for row in distance_matrix:
-                dmfile.write(" ".join(str(el) for el in row))
-                dmfile.write("\n")
+        #with open("matrix.np",'w') as dmfile:
+        #    for row in distance_matrix:
+        #        dmfile.write(" ".join(str(el) for el in row))
+        #        dmfile.write("\n")
 
         distance_matrix = distance_matrix.tolist()
 
