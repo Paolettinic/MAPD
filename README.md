@@ -4,7 +4,7 @@ Multi Agent Pickup and Delivery in warehouse environment, project for the Planni
 
 ---
 NOTE: this repository uses LKH-3, compiled from soure for linux. In order to execute it from a windows machine
-download the executable from linux from [here]('http://webhotel4.ruc.dk/~keld/research/LKH-3/LKH-3.exe')
+download the executable for linux from [here](http://webhotel4.ruc.dk/~keld/research/LKH-3/LKH-3.exe)
 ## Instructions
 - Create a conda environment:
 
