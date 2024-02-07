@@ -7,23 +7,23 @@ NOTE: this repository uses LKH-3, compiled from soure for linux. The original so
 [here](http://webhotel4.ruc.dk/~keld/research/LKH-3/)
 ## Instructions
 - Create a conda environment:
-```bash
+```shell
 conda create mapf
 ```
 - Clone this repository
-```bash
+```shell
 git clone https://github.com/Paolettinic/MAPD
 ```
 - Move into the main directory
-```bash
+```shell
 cd MAPD
 ```
 - Activate the conda env:
-```bash
+```shell
 conda activate mapf
 ```
 - execute the main file:
-```bash
+```shell
 python main.py -a "token_passing" --scenario "scenarios/scen1.json"
 ```
 This will execute the algorithm "Token Passing" using the specified scenario; the available algorithms are:
