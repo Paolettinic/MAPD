@@ -3,8 +3,8 @@
 Multi Agent Pickup and Delivery in warehouse environment, project for the Planning and Reasoning exam.
 
 ---
-NOTE: this repository uses LKH-3, compiled from soure for linux. In order to execute it from a windows machine
-download the executable for linux from [here](http://webhotel4.ruc.dk/~keld/research/LKH-3/LKH-3.exe)
+NOTE: this repository uses LKH-3, compiled from soure for linux. The original source files and windows executable is available
+[here](http://webhotel4.ruc.dk/~keld/research/LKH-3/)
 ## Instructions
 - Create a conda environment:
 
