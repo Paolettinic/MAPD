@@ -6,15 +6,15 @@
 
 # makespans
 - TPTS
-    - big:      647 
-    - small:    864 
+    - big:      680
+    - small:    873
 -TP
-    - big       1584
-    - small:    1103
+    - big       1552
+    - small:    1052
 - CENTRAL
     - big:  -
     - small:    
 - PRIORITIZED
     -big:       1661
-    -small:     1428
+    -small:     1729
 
