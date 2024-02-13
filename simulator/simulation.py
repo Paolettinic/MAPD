@@ -3,7 +3,7 @@ import pathlib
 import tkinter as tk
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-
+from typing import List
 from planner.algorithm_utils import get_algorithm
 from planner import Algorithm, Task
 from .agent import TKAgent
@@ -19,6 +19,11 @@ class Simulation(ABC):
     def start(self) -> None:
         ...
 
+    @abstractmethod
+    def update(self) -> None:
+        ...
+
+
 
 class State(Enum):
     RUNNING = auto()
@@ -27,10 +32,19 @@ class State(Enum):
 
 class TkinterSimulation(Simulation):
     """
-
+        TkinterSimulation class for Multi-Agent Pathfinding (MAPF) 
+        visualization using Tkinter.
     """
 
     def __init__(self, scenario_path: pathlib.Path, algorithm: str, grid_size: int = 10):
+        """
+        Initialize the simulation implemented in TKinter
+        Args:
+            scenario_path (pathlib.Path): The path to the scenario JSON file.
+            algorithm (str): The algorithm to use for pathfinding.
+            grid_size (int, optional): The size of each grid cell in pixels.
+                Default is 10.
+        """
         self.algorithm_name = algorithm
         # scenario opening
         with open(scenario_path, "r") as scenario:
@@ -74,6 +88,9 @@ class TkinterSimulation(Simulation):
         self.initialize()
 
     def initialize(self):
+        """
+        Initialize the simulation by creating the grid, walls, shelves, stations, and agents.
+        """
         # Draw vertical lines
         for i in range(self.grid_size, self.win_w, self.grid_size):
             self.canvas.create_line((i, 0, i, self.win_h), fill="grey")
@@ -126,40 +143,91 @@ class TkinterSimulation(Simulation):
         # self.algorithm.add_tasks(self.tasks)
 
     def update(self):
+        """
+        Update the simulation state based on the selected algorithm.
+
+        If the simulation is running, the algorithm is updated and the timestep label is updated.
+        """
         if self.state == State.RUNNING:
             if self.algorithm_name in self.online_algorithms:
-                new_tasks = self.get_new_tasks(self.algorithm.timestep)
-                self.algorithm.add_tasks(new_tasks)
+                self.algorithm.add_tasks(self.get_new_tasks(self.algorithm.timestep))
+            else:
+                if self.algorithm.makespan != -1:
+                    print("MAKESPAN: ", self.algorithm.makespan)
+                    self.pause()
             self.algorithm.update()
             self.timestep_label.config(text=f"Timestep: {self.algorithm.timestep}")
         self.window.after(self.DT, self.update)
 
     def get_next_color(self):
+        """
+        Get the next color from the color list for agents.
+
+        Returns:
+            str: The next color.
+        """
         c = self.colors[self.cur_color]
         self.cur_color = (self.cur_color + 1) % len(self.colors)
         return c
 
     def start(self) -> None:
+        """
+        Start the simulation loop.
+        """
         self.window.after(self.DT, self.update)
         self.window.mainloop()
 
-    def hover(self, event):
+    def hover(self, event) -> None:
+        """
+        Update the position label based on mouse hover.
+
+        Args:
+            event: Tkinter event object.
+        """
         x, y = event.x, event.y
         self.pos_label.config(text=f"({x // self.grid_size},{y // self.grid_size})")
     
-    def get_new_tasks(self, timestep: int):
+    def get_new_tasks(self, timestep: int) -> List[Task]:
+        """
+        Get new tasks available at the given timestep.
+
+        Args:
+            timestep (int): The current timestep.
+
+        Returns:
+            List[Task]: List of new tasks.
+        """
         new_tasks = list(filter(lambda t: t.r == timestep, self.tasks))
         return new_tasks
+    
+    def pause(self):
+        """
+        Pause the simulation.
+        """
+        self.state = State.PAUSED
+        self.status_label.config(text=self.paused_text)
+
+    def run(self):
+        """
+        Run the simulation
+        """
+        self.state = State.RUNNING
+        self.status_label.config(text=self.running_text)
+
 
     def keypress_handler(self, event):
+        """
+        Handle keypress events for controlling the simulation.
+
+        Args:
+            event: Tkinter event object.
+        """
         match event.char:
             case " ":  # Run/Pause simulation toggle
                 if self.state == State.RUNNING:
-                    self.state = State.PAUSED
-                    self.status_label.config(text=self.paused_text)
+                    self.pause()
                 elif self.state == State.PAUSED:
-                    self.state = State.RUNNING
-                    self.status_label.config(text=self.running_text)
+                    self.run()
                 else:
                     raise RuntimeError("Unknown state")
             case "q":  # Press q to quit
@@ -179,3 +247,4 @@ class TkinterSimulation(Simulation):
 
             case _:  # ignore any other keystroke
                 pass
+

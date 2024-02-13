@@ -6,7 +6,7 @@ from simulator import Agent, Grid
 
 class Algorithm(ABC):
     timestep: int
-
+    makespan: int
     @abstractmethod
     def __init__(self, agents: List[Agent], grid: Grid, tasks: List[Task]):
         ...

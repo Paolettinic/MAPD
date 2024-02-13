@@ -1,7 +1,7 @@
 from typing import Tuple, Dict, List, Any
 from abc import ABC, abstractmethod
 import tkinter as tk
-from .tkinter_utils import rect_pos_to_coordinates, move_from_to
+from .tkinter_utils import rect_pos_to_coordinates, move_from_to, eqt_pos_to_coordinates
 
 
 class Agent(ABC):
@@ -15,19 +15,22 @@ class Agent(ABC):
 
     @abstractmethod
     def move_to(self, position: Tuple) -> None:
-        pass
+        ...
 
     @abstractmethod
     def pickup(self, shelf_position: Tuple) -> None:
-        pass
+        ...
 
     @abstractmethod
     def unload(self) -> None:
-        pass
+        ...
 
     @abstractmethod
     def update(self) -> None:
-        pass
+        ...
+    @abstractmethod
+    def assign_pickup_delivery(self, pickup: Tuple, delivery: Tuple) -> None:
+        ...
 
 class TKAgent(Agent):
     """
@@ -40,6 +43,16 @@ class TKAgent(Agent):
         self.task = None
         self.canvas = canvas
         self.color = color
+        self.pickup_location = self.position
+        self.delivery_location = self.position
+        self.pickup_handler = self.canvas.create_polygon(
+            eqt_pos_to_coordinates(*self.pickup_location),
+            fill=color
+        )
+        self.delivery_handler = self.canvas.create_polygon(
+            eqt_pos_to_coordinates(*self.pickup_location),
+            fill=color
+        )
         self.handler = self.canvas.create_oval(
             rect_pos_to_coordinates(*position),
             fill=color
@@ -71,6 +84,24 @@ class TKAgent(Agent):
             )
         )
         self.position = position
+
+    def assign_pickup_delivery(self, pickup: Tuple, delivery: Tuple) -> None:
+        self.canvas.move(
+            self.pickup_handler,
+            *move_from_to(
+                self.pickup_location,
+                pickup
+            )
+        )
+        self.canvas.move(
+            self.delivery_handler,
+            *move_from_to(
+                self.delivery_location,
+                delivery
+            )
+        )
+        self.pickup_location = pickup
+        self.delivery_location = delivery
 
     def pickup(self, shelf_position: Tuple) -> None:
         pass

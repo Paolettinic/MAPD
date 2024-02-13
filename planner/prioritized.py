@@ -1,3 +1,4 @@
+from enum import Enum, auto 
 from typing import Set, List, Tuple, Dict
 from .task import Task
 from .task_agent_graph import TaskAgentGraph, TaskAgentVertex, TaskAgentEdge
@@ -8,13 +9,35 @@ from .algorithm import Algorithm
 from .timing import timeit
 import os
 
+class AgentStatus(Enum):
+    pickup = auto()
+    delivery = auto()
+
 
 class PrioritizedAgent:
     def __init__(self, agent: Agent):
         self.agent = agent
+        self.has_finished_all_tasks = False
+        self.assigned_tasks : List[Task] = []
+        self.current_task_index = 0
+        self.status = AgentStatus.pickup
 
     def update(self):
         self.agent.update()
+        if self.current_task_index < len(self.assigned_tasks):
+            if self.status == AgentStatus.pickup:
+                if self.position == self.assigned_tasks[self.current_task_index].s:
+                    self.status = AgentStatus.delivery
+            elif self.status == AgentStatus.delivery:
+                if self.position == self.assigned_tasks[self.current_task_index].g:
+                    self.status = AgentStatus.pickup
+                    self.current_task_index += 1 
+                    if self.current_task_index >= len(self.assigned_tasks):
+                        return
+                    new_task = self.assigned_tasks[self.current_task_index]
+                    self.agent.assign_pickup_delivery(new_task.s, new_task.g)
+        else:
+            self.has_finished_all_tasks = True 
 
     def assign_path(self, path: List[Tuple]):
         self.agent.command_queue = [{"move_to": pos} for pos, _ in path]
@@ -33,19 +56,25 @@ class PrioritizedTaskPlanning(Algorithm):
     PROBLEM_FILE_NAME = "problem.tsp"
     PARAMETER_FILE_NAME = "parameters.par"
     TOUR_FILE_NAME = "solution.tour"
+    OUTPUT_TOUR_FILE_NAME = "out_solution.tour"
     PROBLEM_FILE = os.path.join(LKH_PATH, PROBLEM_FILE_NAME) 
     PARAMETER_FILE = os.path.join(LKH_PATH, PARAMETER_FILE_NAME)
     TOUR_FILE = os.path.join(LKH_PATH, TOUR_FILE_NAME)
+    OUTPUT_TOUR_FILE = os.path.join(LKH_PATH, OUTPUT_TOUR_FILE_NAME)
     LKH_EXECUTABLE = os.path.join(LKH_PATH, "LKH")
 
     PARAMETER_VALUES = {
         "PROBLEM_FILE": f"{PROBLEM_FILE}",
-        "MAX_TRIALS": "10000",
-        "TIME_LIMIT": "1000",
-        "RUNS": "5",
-        "TRACE_LEVEL": "0",
+        "TIME_LIMIT": "100",
+        "TRACE_LEVEL": "1",
         "TOUR_FILE": f"{TOUR_FILE}",
-        "MAKESPAN": "YES"
+        "OUTPUT_TOUR_FILE": f"{OUTPUT_TOUR_FILE}",
+        "RUNS" : "10",
+        "SEED": "123",
+        "MOVE_TYPE": "5",
+        "PATCHING_C": "3",
+        "MAKESPAN" : "YES",
+        "POPULATION_SIZE" : "10"
     }
     PROBLEM_VALUES = {
         "NAME": "TA-Prioritized",
@@ -53,7 +82,6 @@ class PrioritizedTaskPlanning(Algorithm):
         "TYPE": "ATSP",
         "DIMENSION": "", # this has to be changed with len(agents) + len(tasks)
         "EDGE_WEIGHT_TYPE": "EXPLICIT",
-        "DISPLAY_DATA_TYPE": "NO_DISPLAY",
         "EDGE_WEIGHT_FORMAT": "FULL_MATRIX",
     }
 
@@ -63,7 +91,13 @@ class PrioritizedTaskPlanning(Algorithm):
         self.tasks = tasks
         self.graph = self.build_graph()
         self.timestep = 0
+        self.makespan = -1
         task_assignment = self.assign_tasks_to_agents()
+        for ag_k in task_assignment:
+            if task_assignment[ag_k]:
+                self.agents[ag_k].assigned_tasks = task_assignment[ag_k]
+                first_task = task_assignment[ag_k][0]
+                self.agents[ag_k].agent.assign_pickup_delivery(first_task.s, first_task.g)
         constraint_set = set()
         cur_agents_paths = {
             agent_key: self.find_path_for_agent(
@@ -160,7 +194,7 @@ class PrioritizedTaskPlanning(Algorithm):
         import time
         # writing parameter file
         with open(self.PARAMETER_FILE, 'w+') as parameter_file:
-            parameter_file.write("SPECIAL\n")
+            #parameter_file.write("SPECIAL\n")
             for key, value in self.PARAMETER_VALUES.items():
                 parameter_file.write(key + " = " + value + "\n")
         # writing problem file
@@ -171,6 +205,12 @@ class PrioritizedTaskPlanning(Algorithm):
             problem_file.write("EDGE_WEIGHT_SECTION\n")
             for row in distance_matrix:
                 problem_file.write(" ".join(str(int(val)) for val in row) + "\n")
+            #problem_file.write("TIME_WINDOW_SECTION\n")
+            #for i in range(len(self.agents)):
+            #    problem_file.write(f"{i+1} {-1} {10000}\n")
+            #for i, task in enumerate(self.tasks):
+            #    problem_file.write(f"{i + len(self.agents) + 1} {task.r} {10000}\n")
+
             problem_file.write("EOF\n")
 
         print("solving using LKH")
@@ -248,6 +288,9 @@ class PrioritizedTaskPlanning(Algorithm):
         return graph
 
     def update(self):
+        if self.makespan == -1:
+            if all([agent.has_finished_all_tasks for agent in self.agents.values()]):
+                self.makespan = self.timestep
         for agent_key in self.agents:
             self.agents[agent_key].update()
         self.timestep += 1

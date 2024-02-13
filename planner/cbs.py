@@ -1,7 +1,7 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Tuple, List, Dict, Set
+from typing import Tuple, List, Dict, Set, Optional
 from itertools import combinations
 from simulator import Grid
 from .a_star_planner import AStarPlanner
@@ -47,7 +47,7 @@ class CBS:
         agents_tasks: Dict[int, Tuple[Tuple, Tuple]],
         grid: Grid,
         timestep: int = 0,
-        spatio_temporal_obstacles: Set[Tuple[Tuple, int]] = None
+        spatio_temporal_obstacles: Optional[Set[Tuple[Tuple, int]]] = None
     ) -> Dict[int, List[Tuple]]:
         open_set = set()
         closed_set = set()
@@ -146,16 +146,16 @@ class CBS:
                     )
         return None  # No conflicts found
 
-    @classmethod
-    def compute_solutions_and_cost(
-        cls,
-        agents_tasks: Dict[int, Tuple[Tuple, Tuple]],
-        grid: Grid,
-        constraints: Dict[int, Set[Tuple]],
-        spatio_temporal_obstacles: List[Tuple[Tuple, int]],
-        timestep: int = 0
-    ) -> Tuple[Dict[int, List[Tuple]], int]:
-        pass
+    #@classmethod
+    #def compute_solutions_and_cost(
+    #    cls,
+    #    agents_tasks: Dict[int, Tuple[Tuple, Tuple]],
+    #    grid: Grid,
+    #    constraints: Dict[int, Set[Tuple]],
+    #    spatio_temporal_obstacles: List[Tuple[Tuple, int]],
+    #    timestep: int = 0
+    #) -> Tuple[Dict[int, List[Tuple]], int]:
+    #    pass
 
     @staticmethod
     def solution_cost(solution: Dict[int, List[Tuple]]):
@@ -164,8 +164,8 @@ class CBS:
 
 @dataclass
 class CTNode:
-    constraints: Dict[int, Set[Tuple[Tuple, int]]] = None
-    solution: Dict[int, List[Tuple]] = None
+    constraints: Optional[Dict[int, Set[Tuple[Tuple, int]]]] = None
+    solution: Optional[Dict[int, List[Tuple]]] = None
     cost: int = 0
 
     def __eq__(self, other):

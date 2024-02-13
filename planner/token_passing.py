@@ -10,17 +10,22 @@ class TPAgent:
     def __init__(self, agent: Agent):
         self.agent = agent
         self.requires_token = True
-        self.task = None
         self.final = self.agent.position
+        self.task_completed = True
 
     def update(self):
-        if len(self.agent.command_queue) <= 1:
-            self.requires_token = True
         self.agent.update()
+        if len(self.agent.command_queue) < 1:
+            self.requires_token = True
+            self.task_completed = True
 
     def assign_path(self, path):
         self.agent.command_queue = [{"move_to": pos} for pos, _ in path]
         self.final, _ = path[0]
+        self.task_completed = False
+
+    def assign_task(self, task: Task):
+        self.agent.assign_pickup_delivery(task.s, task.g)
 
 
 @dataclass
@@ -35,6 +40,7 @@ class TokenPassing(Algorithm):
         self.grid = grid
         self.tp_agents = {ag: TPAgent(agent) for ag, agent in enumerate(agents)}
         self.timestep = 0
+        self.makespan = -1
         self.token = Token(
             paths={
                 ag: [(self.tp_agents[ag].agent.position, self.timestep)]
@@ -62,10 +68,14 @@ class TokenPassing(Algorithm):
             path = path_function(agent=self.tp_agents[agent], constraints=constraints, **kwargs)
         else:
             raise RuntimeError("Either specify a path or a path_function")
+        if "task" in kwargs:
+            self.tp_agents[agent].assign_task(kwargs["task"])
         self.token.paths[agent] = path
         self.tp_agents[agent].assign_path(path)
 
     def add_tasks(self, tasks: List[Task]):
+        if tasks:
+            self.makespan = -1
         self.token.tasks += tasks
 
     def path1(self, agent: TPAgent, task: Task, constraints: Set[Tuple], **kwargs):
@@ -131,7 +141,10 @@ class TokenPassing(Algorithm):
 
                     else:
                         self.assign_path_to_agent(agent, path_function=self.path2)
-
         for agent in self.tp_agents:
             self.tp_agents[agent].update()
+        if self.makespan == -1:
+            if all([agent.task_completed for agent in self.tp_agents.values()]) and not self.token.tasks:
+                self.makespan = self.timestep
+                print("CURRENT MAKESPAN",self.makespan)
         self.timestep += 1

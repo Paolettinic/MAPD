@@ -13,7 +13,7 @@ class Task:
             return isinstance(other, Task) and self.s == other.s and self.g == other.g and self.r == other.r
         return False
     def __str__(self):
-        return f"task(s:{self.s},g:{self.g})"
+        return f"task(s:{self.s},g:{self.g},r:{self.r})"
 
     def __repr__(self):
         return str(self)
