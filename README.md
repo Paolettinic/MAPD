@@ -10,10 +10,6 @@ NOTE: this repository uses LKH-3, compiled from soure for linux. The original so
 ```shell
 conda create mapf
 ```
-- Install all the dependencies :
-```shell
-pip install -r requirements.txt
-```
 - Clone this repository
 ```shell
 git clone https://github.com/Paolettinic/MAPD
@@ -25,6 +21,10 @@ cd MAPD
 - Activate the conda env:
 ```shell
 conda activate mapf
+```
+- Install all the dependencies :
+```shell
+pip install -r requirements.txt
 ```
 - execute the main file:
 ```shell
