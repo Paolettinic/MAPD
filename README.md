@@ -28,11 +28,11 @@ pip install -r requirements.txt
 ```
 - execute the main file:
 ```shell
-python main.py -a "token_passing" --scenario "scenarios/scen1.json"
+python3 main.py -a "token_passing" --scenario "scenarios/scen1.json"
 ```
 This will execute the algorithm "Token Passing" using the specified scenario; the available algorithms are:
 - Token Passing: "token_passing"
 - Token Passing with Taks Swaps:  "token_passing_task_swap"
-- Central:  "central" 
+- Central:  "central" (not working on the provided maps, read the report for more information)
 - Task Assignment with Prioritized Path Planning:  "prioritized_task_assignment"
 
