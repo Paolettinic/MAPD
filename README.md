@@ -6,10 +6,7 @@ Multi Agent Pickup and Delivery in warehouse environment, project for the Planni
 NOTE: this repository uses LKH-3, compiled from soure for linux. The original source files and windows executable is available
 [here](http://webhotel4.ruc.dk/~keld/research/LKH-3/)
 ## Instructions
-- Create a conda environment:
-```shell
-conda create -n mapf python -y
-```
+
 - Clone this repository
 ```shell
 git clone https://github.com/Paolettinic/MAPD
@@ -18,10 +15,15 @@ git clone https://github.com/Paolettinic/MAPD
 ```shell
 cd MAPD
 ```
-- Activate the conda env:
-```shell
-conda activate mapf
-```
+- [OPTIONAL]
+  - Create a conda environment:
+  ```shell
+  conda create -n mapf python -y
+  ```
+  - Activate the conda env:
+  ```shell
+  conda activate mapf
+  ```
 - Install all the dependencies :
 ```shell
 pip install -r requirements.txt
