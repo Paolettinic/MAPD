@@ -28,7 +28,7 @@ pip install -r requirements.txt
 ```
 - execute the main file:
 ```shell
-python3 main.py -a "token_passing" --scenario "scenarios/scen1.json"
+python3 main.py -a "token_passing" --scenario "scenarios/scen_small_100_6.json"
 ```
 This will execute the algorithm "Token Passing" using the specified scenario; the available algorithms are:
 - Token Passing: "token_passing"
