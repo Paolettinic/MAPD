@@ -8,7 +8,7 @@ NOTE: this repository uses LKH-3, compiled from soure for linux. The original so
 ## Instructions
 - Create a conda environment:
 ```shell
-conda create -n mapf -y
+conda create -n mapf python -y
 ```
 - Clone this repository
 ```shell
